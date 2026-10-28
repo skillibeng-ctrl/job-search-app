@@ -7,7 +7,7 @@ import { Link, NavLink, useLocation } from "react-router-dom";
 const GUEST_LINKS = [
   { name: "Find Jobs", to: "/jobs" },
   { name: "Companies", to: "/companies" },
-  { name: "Resources", to: "/resources" }, // Changed from /advice to match your App.jsx
+  { name: "Resources", to: "/resources" },
   { name: "Salaries", to: "/salaries" },
 ];
 
@@ -34,9 +34,7 @@ const mobileLinkClass = ({ isActive }) =>
     isActive ? "bg-emerald-50 text-emerald-700" : "text-gray-700 hover:bg-gray-50"
   }`;
 
-/* ---------------- component ---------------- */
-
-export default function NavBar({ user = null, unread = 0 }) {
+export default function NavBar({ user = null, unread = 0, onLogout }) {
   const [open, setOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -127,6 +125,13 @@ export default function NavBar({ user = null, unread = 0 }) {
     return () => document.removeEventListener("mousedown", onDown);
   }, [open, menuOpen]);
 
+  // Helper to handle logout
+  const handleLogout = () => {
+    setMenuOpen(false);
+    setOpen(false);
+    if (onLogout) onLogout();
+  };
+
   return (
     <header className={`sticky top-0 z-50 border-b transition-all duration-300 ${
       scrolled || open ? "border-gray-200 bg-white/90 shadow-sm backdrop-blur-md" : "border-transparent bg-white"
@@ -216,7 +221,12 @@ export default function NavBar({ user = null, unread = 0 }) {
                           </div>
                         ))}
                         <div className="my-1 h-px bg-gray-100" />
-                        <button className="w-full px-4 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 transition">Sign out</button>
+                        <button 
+                          onClick={handleLogout}
+                          className="w-full px-4 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 transition"
+                        >
+                          Sign out
+                        </button>
                       </div>
                     </div>
                   )}
@@ -265,7 +275,12 @@ export default function NavBar({ user = null, unread = 0 }) {
                     {item.badge > 0 && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-600">{item.badge}</span>}
                   </Link>
                 ))}
-                <button className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-rose-600 hover:bg-rose-50">Sign out</button>
+                <button 
+                  onClick={handleLogout}
+                  className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-rose-600 hover:bg-rose-50"
+                >
+                  Sign out
+                </button>
               </>
             )}
           </div>
