@@ -792,11 +792,11 @@ const Companies = () => {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white">
+     
+      {/* <footer className="bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Brand */}
+            
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Rocket className="w-8 h-8 text-green-400" />
@@ -818,7 +818,6 @@ const Companies = () => {
               </div>
             </div>
 
-            {/* For Job Seekers */}
             <div>
               <h4 className="font-semibold mb-4">For Job Seekers</h4>
               <ul className="space-y-3">
@@ -845,7 +844,6 @@ const Companies = () => {
               </ul>
             </div>
 
-            {/* For Employers */}
             <div>
               <h4 className="font-semibold mb-4">For Employers</h4>
               <ul className="space-y-3">
@@ -872,7 +870,6 @@ const Companies = () => {
               </ul>
             </div>
 
-            {/* Company */}
             <div>
               <h4 className="font-semibold mb-4">Company</h4>
               <ul className="space-y-3">
@@ -909,7 +906,7 @@ const Companies = () => {
             </div>
           </div>
         </div>
-      </footer>
+      </footer> */}
     </div>
   );
 };
