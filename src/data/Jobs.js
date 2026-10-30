@@ -111,3 +111,4 @@ export const MOCK_JOBS = [
     apply_url: "https://example.com/careerpoint", posted_at: d(8),
   },
 ];
+export default MOCK_JOBS;
