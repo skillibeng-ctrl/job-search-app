@@ -1,14 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { ChevronDown } from "lucide-react"; // Make sure you have lucide-react
 
 /* ---------------- config ---------------- */
 
-// 4 links only. Saved Jobs moves to the right side.
+// 🔥 Upgraded Guest Links with a Dropdown
 const GUEST_LINKS = [
   { name: "Find Jobs", to: "/jobs" },
   { name: "Companies", to: "/companies" },
-  { name: "Resources", to: "/resources" },
-  { name: "Salaries", to: "/salaries" },
+  { 
+    name: "Resources", 
+    isDropdown: true,
+    items: [
+      { name: "Career Advice", to: "/resources" },
+      { name: "Resume Templates", to: "/resources" },
+      { name: "Salary Guide", to: "/salaries" },
+    ]
+  },
+  { name: "How It Works", to: "/how-it-works" },
 ];
 
 const SEEKER_LINKS = GUEST_LINKS;
@@ -21,7 +30,7 @@ const EMPLOYER_LINKS = [
 
 const linkClass = ({ isActive }) =>
   [
-    "relative py-1 text-sm font-medium transition-colors",
+    "relative py-1 text-sm font-medium transition-colors flex items-center gap-1",
     "after:absolute after:left-0 after:-bottom-0.5 after:h-[2px] after:rounded-full after:bg-emerald-500",
     "after:transition-all after:duration-300",
     isActive
@@ -39,6 +48,10 @@ export default function NavBar({ user = null, unread = 0, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   
+  // 🔥 State for the Navigation Dropdowns
+  const [activeDropdown, setActiveDropdown] = useState(null);
+  const [mobileDropdownOpen, setMobileDropdownOpen] = useState(false);
+
   // 🔥 Dynamic Badges State
   const [savedCount, setSavedCount] = useState(0);
   const [appliedCount, setAppliedCount] = useState(0);
@@ -46,20 +59,20 @@ export default function NavBar({ user = null, unread = 0, onLogout }) {
   const toggleRef = useRef(null);
   const panelRef = useRef(null);
   const menuRef = useRef(null);
+  const navRef = useRef(null); // For closing dropdowns
+  
   const { pathname } = useLocation();
 
   const role = user?.role ?? "guest";
   const links = role === "employer" ? EMPLOYER_LINKS : role === "seeker" ? SEEKER_LINKS : GUEST_LINKS;
 
-  /* ---- 🔥 Read LocalStorage for Badges ---- */
+  /* ---- Read LocalStorage for Badges ---- */
   useEffect(() => {
     const updateCounts = () => {
       try {
         setSavedCount(JSON.parse(localStorage.getItem("savedJobs") || "[]").length);
         setAppliedCount(JSON.parse(localStorage.getItem("appliedJobs") || "[]").length);
-      } catch {
-        // ignore
-      }
+      } catch {}
     };
     updateCounts();
     window.addEventListener("jobsUpdated", updateCounts);
@@ -81,6 +94,8 @@ export default function NavBar({ user = null, unread = 0, onLogout }) {
   useEffect(() => {
     setOpen(false);
     setMenuOpen(false);
+    setActiveDropdown(null);
+    setMobileDropdownOpen(false);
   }, [pathname]);
 
   /* scroll state */
@@ -93,11 +108,12 @@ export default function NavBar({ user = null, unread = 0, onLogout }) {
 
   /* escape + scroll lock */
   useEffect(() => {
-    if (!open && !menuOpen) return;
+    if (!open && !menuOpen && !activeDropdown) return;
     const onKey = (e) => {
       if (e.key === "Escape") {
         setOpen(false);
         setMenuOpen(false);
+        setActiveDropdown(null);
         toggleRef.current?.focus();
       }
     };
@@ -108,24 +124,29 @@ export default function NavBar({ user = null, unread = 0, onLogout }) {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, menuOpen]);
+  }, [open, menuOpen, activeDropdown]);
 
-  /* outside click */
+  /* 🔥 outside click for menus & dropdowns */
   useEffect(() => {
-    if (!open && !menuOpen) return;
+    if (!open && !menuOpen && !activeDropdown) return;
     const onDown = (e) => {
+      // Mobile menu close
       if (open && !panelRef.current?.contains(e.target) && !toggleRef.current?.contains(e.target)) {
         setOpen(false);
       }
+      // Avatar menu close
       if (menuOpen && !menuRef.current?.contains(e.target)) {
         setMenuOpen(false);
+      }
+      // Navigation Dropdown close
+      if (activeDropdown && navRef.current && !navRef.current.contains(e.target)) {
+        setActiveDropdown(null);
       }
     };
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
-  }, [open, menuOpen]);
+  }, [open, menuOpen, activeDropdown]);
 
-  // Helper to handle logout
   const handleLogout = () => {
     setMenuOpen(false);
     setOpen(false);
@@ -145,19 +166,51 @@ export default function NavBar({ user = null, unread = 0, onLogout }) {
             <span className="text-lg font-semibold tracking-tight text-gray-900">JobFlow</span>
           </Link>
 
-          {/* Desktop Links */}
-          <nav className="hidden items-center gap-8 md:flex">
-            {links.map((l) => (
-              <NavLink key={l.name} to={l.to} end={l.end} className={linkClass}>
-                {l.name}
-              </NavLink>
-            ))}
+          {/* 🔥 Desktop Links with Dropdown Support */}
+          <nav ref={navRef} className="hidden items-center gap-8 md:flex">
+            {links.map((l) => {
+              if (l.isDropdown) {
+                return (
+                  <div key={l.name} className="relative">
+                    <button
+                      onClick={() => setActiveDropdown(activeDropdown === l.name ? null : l.name)}
+                      className={`flex items-center gap-1 py-1 text-sm font-medium transition-colors ${
+                        activeDropdown === l.name ? "text-gray-900" : "text-gray-600 hover:text-gray-900"
+                      }`}
+                    >
+                      {l.name}
+                      <ChevronDown className={`h-4 w-4 transition-transform ${activeDropdown === l.name ? "rotate-180" : ""}`} />
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {activeDropdown === l.name && (
+                      <div className="absolute left-0 top-full mt-2 w-48 rounded-xl border border-gray-100 bg-white p-1.5 shadow-xl shadow-gray-200/50 animate-in fade-in slide-in-from-top-2 duration-200">
+                        {l.items.map((item) => (
+                          <Link
+                            key={item.name}
+                            to={item.to}
+                            className="block rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 transition"
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              
+              return (
+                <NavLink key={l.name} to={l.to} end={l.end} className={linkClass}>
+                  {l.name}
+                </NavLink>
+              );
+            })}
           </nav>
 
           {/* Desktop Right Side */}
           <div className="hidden items-center gap-3 md:flex">
             
-            {/* If Guest: Show Saved Jobs + Auth Buttons */}
             {role === "guest" && (
               <>
                 <NavLink to="/saved" className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors mr-2">
@@ -170,6 +223,13 @@ export default function NavBar({ user = null, unread = 0, onLogout }) {
                 </NavLink>
 
                 <span className="h-5 w-px bg-gray-200" aria-hidden />
+
+                {/* Employer Link */}
+                <Link to="/employers" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors mr-1">
+                  For Employers
+                </Link>
+
+                <span className="h-5 w-px bg-gray-200" aria-hidden />
                 
                 <Link to="/signin" className="text-sm font-medium text-gray-700 hover:text-gray-900">Sign in</Link>
                 <Link to="/register" className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-600 transition">
@@ -178,7 +238,6 @@ export default function NavBar({ user = null, unread = 0, onLogout }) {
               </>
             )}
 
-            {/* If Logged In: Show Bell + Avatar */}
             {role !== "guest" && (
               <>
                 <button className="relative flex h-10 w-10 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100 transition">
@@ -201,7 +260,7 @@ export default function NavBar({ user = null, unread = 0, onLogout }) {
                   </button>
 
                   {menuOpen && (
-                    <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl shadow-gray-200/60">
+                    <div className="absolute right-0 mt-2 w-64 overflow-hidden rounded-xl border border-gray-100 bg-white shadow-xl shadow-gray-200/60 animate-in fade-in slide-in-from-top-2 duration-200">
                       <div className="border-b border-gray-100 px-4 py-3">
                         <p className="truncate text-sm font-semibold text-gray-900">{user.name}</p>
                         <p className="truncate text-xs text-gray-500">{user.email}</p>
@@ -248,13 +307,41 @@ export default function NavBar({ user = null, unread = 0, onLogout }) {
 
       {/* Mobile Menu */}
       {open && (
-        <div id="mobile-menu" ref={panelRef} className="border-t border-gray-200 bg-white md:hidden">
+        <div id="mobile-menu" ref={panelRef} className="border-t border-gray-200 bg-white md:hidden absolute w-full shadow-lg">
           <nav className="space-y-1 px-4 py-4">
-            {links.map((l) => (
-              <NavLink key={l.name} to={l.to} end={l.end} className={mobileLinkClass}>
-                {l.name}
-              </NavLink>
-            ))}
+            {links.map((l) => {
+              if (l.isDropdown) {
+                return (
+                  <div key={l.name} className="py-1">
+                    <button
+                      onClick={() => setMobileDropdownOpen(!mobileDropdownOpen)}
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                    >
+                      {l.name}
+                      <ChevronDown className={`h-4 w-4 transition-transform ${mobileDropdownOpen ? "rotate-180" : ""}`} />
+                    </button>
+                    {mobileDropdownOpen && (
+                      <div className="mt-1 ml-4 space-y-1 border-l-2 border-emerald-100 pl-2">
+                        {l.items.map((item) => (
+                          <Link
+                            key={item.name}
+                            to={item.to}
+                            className="block rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                          >
+                            {item.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+              return (
+                <NavLink key={l.name} to={l.to} end={l.end} className={mobileLinkClass}>
+                  {l.name}
+                </NavLink>
+              );
+            })}
           </nav>
 
           <div className="space-y-2 border-t border-gray-100 px-4 py-4">
@@ -263,6 +350,9 @@ export default function NavBar({ user = null, unread = 0, onLogout }) {
                 <Link to="/saved" className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
                   Saved Jobs
                   {savedCount > 0 && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">{savedCount}</span>}
+                </Link>
+                <Link to="/employers" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50">
+                  For Employers
                 </Link>
                 <Link to="/signin" className="block rounded-lg border border-gray-300 px-4 py-2.5 text-center text-sm font-medium text-gray-700 hover:bg-gray-50">Sign in</Link>
                 <Link to="/register" className="block rounded-lg bg-emerald-500 px-4 py-2.5 text-center text-sm font-semibold text-white hover:bg-emerald-600">Get started</Link>
