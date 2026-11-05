@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, MapPin, Briefcase, Clock, ExternalLink, ShieldAlert } from "lucide-react";
-import { MOCK_JOBS } from "../data/Jobs";
+import { MOCK_JOBS } from "../data/jobs";
 import JobCard from "../component/JobCard";
 
 // Helpers (copied from JobCard to keep it simple)
