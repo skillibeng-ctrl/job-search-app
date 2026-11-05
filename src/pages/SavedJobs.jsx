@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { MOCK_JOBS } from "../data/Jobs";
+import { MOCK_JOBS } from "../data/jobs";
 import JobCard from "../component/JobCard";
 import { toast } from "sonner";
 
