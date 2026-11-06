@@ -1,126 +1,130 @@
-import React from "react";
-import { Link } from "react-router-dom";
-import { Trophy, ShieldCheck, Zap, CheckCircle2, Star, ArrowRight, Target } from "lucide-react";
+import { lazy, Suspense } from "react";
+import { Link } from "react-router-dom"; // not using React Router? swap <Link to> for <a href>
+import { ArrowRight, ShieldCheck, Zap, Target, MapPin, Globe } from "lucide-react";
+import { SAMPLE_LOCATIONS } from "./JobMap";
 
-export default function Home() {
+// Leaflet is heavy, so it loads after the headline and button are already on screen.
+const JobMap = lazy(() => import("./JobMap"));
+
+const HIGHLIGHTS = [
+  { icon: ShieldCheck, text: "Hand-screened, verified companies only", tone: "bg-emerald-100 text-emerald-700" },
+  { icon: Zap, text: "Direct application links. No middlemen.", tone: "bg-blue-100 text-blue-700" },
+  { icon: Target, text: "Transparent salaries and real benefits", tone: "bg-orange-100 text-orange-700" },
+];
+
+function MapSkeleton() {
   return (
-    <div className="min-h-screen bg-white font-sans text-gray-900 overflow-hidden">
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-        <div className="grid lg:grid-cols-2 gap-16 lg:gap-8 items-center">
-          
-          {/* ================= LEFT COLUMN (Text & CTA) ================= */}
-          <div className="max-w-2xl relative z-10">
-            
-            {/* Top Pill */}
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700 mb-6">
-              <span className="flex h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Over 2,500+ active roles right now
+    <div
+      role="status"
+      aria-label="Loading map"
+      className="flex h-full w-full items-center justify-center bg-emerald-50 text-sm text-emerald-800 motion-safe:animate-pulse"
+    >
+      Loading map…
+    </div>
+  );
+}
+
+export default function Hero({
+  locations = SAMPLE_LOCATIONS, // SAMPLE DATA: pass real { city, lat, lng, count }
+  remoteCount = null,           // number of remote roles (no pin on a map)
+  activeRoles = "2,500+",
+  browseHref = "/jobs",
+  tileUrl,                      // optional: your tile provider
+  attribution,
+}) {
+  const topCities = [...locations].sort((a, b) => b.count - a.count).slice(0, 3);
+
+  return (
+    <section className="relative overflow-hidden bg-white pb-24 pt-16 lg:pb-32 lg:pt-24">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="grid items-center gap-16 lg:grid-cols-2">
+          {/* ============ LEFT ============ */}
+          <div className="max-w-xl">
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-800">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 motion-safe:animate-pulse" aria-hidden />
+              {activeRoles} active roles right now
             </div>
 
-            {/* Headline */}
-            <h1 className="text-5xl sm:text-6xl font-extrabold tracking-tight leading-[1.1] text-gray-900">
-              Skip the noise. <br />
-              Find the role <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-500 to-teal-600">
-                that actually fits.
-              </span>
+            <h1 className="text-5xl font-extrabold leading-[1.1] tracking-tight text-gray-900 sm:text-6xl">
+              Skip the noise.
+              <br />
+              Find the role
+              <br />
+              <span className="text-emerald-700">that actually fits.</span>
             </h1>
-            
-            {/* Subheadline */}
-            <p className="mt-6 text-lg sm:text-xl text-gray-600 leading-relaxed">
-              Stop sifting through dead listings and spam. Discover verified, curated roles that match your skills, salary expectations, and lifestyle.
+
+            <p className="mt-6 text-lg leading-relaxed text-gray-600">
+              Stop sifting through dead listings and spam. Discover verified, curated roles that match your skills, salary expectations and lifestyle, in your city or anywhere in the world.
             </p>
 
-            {/* CTA Button */}
             <div className="mt-8">
               <Link
-                to="/jobs"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-gray-900 px-8 py-4 text-lg font-bold text-white shadow-xl shadow-gray-900/20 transition-all hover:-translate-y-1 hover:bg-black w-full sm:w-auto"
+                to={browseHref}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gray-900 px-8 py-4 text-base font-bold text-white shadow-xl transition-all hover:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900 motion-safe:hover:-translate-y-1 sm:w-auto"
               >
-                Browse Open Roles
-                <ArrowRight className="h-5 w-5" />
+                Browse open roles
+                <ArrowRight className="h-5 w-5" aria-hidden />
               </Link>
             </div>
 
-            {/* Modern Checklist Box */}
-            <div className="mt-10 rounded-2xl border border-gray-100 bg-white p-6 sm:p-8 shadow-sm">
-              <ul className="space-y-5">
-                <li className="flex items-center gap-4 text-gray-700 font-medium text-base">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100">
-                    <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                  </div>
-                  Hand-screened, verified companies only
+            <ul className="mt-10 space-y-4 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+              {HIGHLIGHTS.map(({ icon: Icon, text, tone }) => (
+                <li key={text} className="flex items-center gap-4 text-sm font-medium text-gray-700">
+                  <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${tone}`}>
+                    <Icon className="h-4 w-4" aria-hidden />
+                  </span>
+                  {text}
                 </li>
-                <li className="flex items-center gap-4 text-gray-700 font-medium text-base">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-                    <Zap className="h-4 w-4 text-blue-600" />
-                  </div>
-                  Direct application links. No middlemen.
-                </li>
-                <li className="flex items-center gap-4 text-gray-700 font-medium text-base">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-orange-100">
-                    <Target className="h-4 w-4 text-orange-600" />
-                  </div>
-                  Transparent salaries and real benefits
+              ))}
+            </ul>
+          </div>
+
+          {/* ============ RIGHT: map card ============ */}
+          <div className="mx-auto w-full max-w-xl">
+            <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl">
+              <div className="flex items-center justify-between px-5 py-4">
+                <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                  <Globe className="h-4 w-4 text-emerald-700" aria-hidden />
+                  Where the roles are
+                </p>
+                <span className="text-xs font-medium text-gray-600">Tap a pin to explore</span>
+              </div>
+
+              <div className="h-[380px] w-full">
+                <Suspense fallback={<MapSkeleton />}>
+                  <JobMap locations={locations} tileUrl={tileUrl} attribution={attribution} />
+                </Suspense>
+              </div>
+
+              {/* text alternative to the map: also quick links */}
+              <ul className="flex flex-wrap gap-2 px-5 py-4">
+                {topCities.map((c) => (
+                  <li key={c.city}>
+                    <Link
+                      to={`/jobs?location=${encodeURIComponent(c.city)}`}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-sm text-gray-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600"
+                    >
+                      <MapPin className="h-3.5 w-3.5" aria-hidden />
+                      {c.city}
+                      <span className="text-gray-600">· {c.count.toLocaleString()}</span>
+                    </Link>
+                  </li>
+                ))}
+                <li>
+                  <Link
+                    to="/jobs?location=Remote"
+                    className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 px-3 py-1.5 text-sm text-gray-700 transition hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-600"
+                  >
+                    <Globe className="h-3.5 w-3.5" aria-hidden />
+                    Remote
+                    {remoteCount != null && <span className="text-gray-600">· {remoteCount.toLocaleString()}</span>}
+                  </Link>
                 </li>
               </ul>
             </div>
           </div>
-
-          {/* ================= RIGHT COLUMN (Image & Badges) ================= */}
-          <div className="relative mx-auto w-full max-w-lg lg:max-w-none flex justify-center mt-12 lg:mt-0">
-            
-            {/* Organic Gradient Blob Background */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] bg-gradient-to-tr from-emerald-100 via-teal-50 to-blue-50 rounded-[40%_60%_70%_30%_/_40%_50%_60%_50%] -z-10 animate-[spin_20s_linear_infinite]"></div>
-
-            {/* Main Image Container (Arch Shape) */}
-            <div className="relative z-10 w-full max-w-sm sm:max-w-md overflow-hidden rounded-t-[10rem] rounded-b-3xl border-8 border-white shadow-2xl">
-              <img
-                src="https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"
-                alt="Professional smiling"
-                className="w-full h-[500px] object-cover"
-              />
-              {/* Subtle overlay to make text pop if needed */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-            </div>
-
-            {/* Floating Badge 1: Top Left (Trophy) */}
-            <div className="absolute left-0 top-16 z-20 flex items-center gap-3 rounded-2xl bg-white/90 p-3 pr-5 shadow-2xl backdrop-blur-md border border-white/20">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500 text-white shadow-inner">
-                <Trophy className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm font-extrabold text-gray-900">Top Rated</p>
-                <p className="text-xs text-gray-500 font-medium">Job platform in 2024</p>
-              </div>
-            </div>
-
-            {/* Floating Badge 2: Bottom Right (Trust) */}
-            <div className="absolute -right-4 bottom-24 z-20 flex items-center gap-3 rounded-2xl bg-white/90 p-3 pr-5 shadow-2xl backdrop-blur-md border border-white/20">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 text-white shadow-inner">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 font-medium">Trusted by</p>
-                <p className="text-sm font-extrabold text-gray-900">10k+ Seekers</p>
-              </div>
-            </div>
-
-            {/* Floating Badge 3: Bottom Left (Volume) */}
-            <div className="absolute -left-6 bottom-8 z-20 flex items-center gap-3 rounded-2xl bg-white/90 p-3 pr-5 shadow-2xl backdrop-blur-md border border-white/20">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 text-white shadow-inner">
-                <Star className="h-5 w-5 fill-white" />
-              </div>
-              <div>
-                <p className="text-lg font-extrabold text-gray-900 leading-none">99%</p>
-                <p className="text-[11px] text-gray-500 font-medium mt-1">Scam-free listings</p>
-              </div>
-            </div>
-
-          </div>
-
         </div>
-      </main>
-    </div>
+      </div>
+    </section>
   );
 }
