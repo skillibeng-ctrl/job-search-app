@@ -12,9 +12,11 @@ import Footer from "./components/ui/Footer";
 import Jobs from "./pages/Job"; 
 import JobDetail from "./pages/JobDetail";
 import SavedJobs from "./pages/SavedJobs";
-import Applications from "./pages/Applications"; // 🔥 Added
-import SignIn from "./pages/SignIn"; // 🔥 Added
-import Register from "./pages/Register"; // 🔥 Added
+import Applications from "./pages/Applications"; 
+import SignIn from "./pages/SignIn"; 
+import Register from "./pages/Register";
+import Salaries from "./pages/Salaries" 
+import ResumeTemplates from "./pages/ResumeTemplates";
 
 function App() {
   
@@ -52,18 +54,19 @@ function App() {
                 </>
               }
             />
+            {/* pages */}
             
-            {/* 🔥 5. Auth Routes */}
             <Route path="/signin" element={<SignIn setUser={setUser} />} />
             <Route path="/register" element={<Register setUser={setUser} />} />
 
-            {/* Job Routes */}
+            
             <Route path="/jobs" element={<Jobs />} /> 
             <Route path="/jobs/:id" element={<JobDetail />}/>
             <Route path="/saved" element={<SavedJobs />}/>
             
-            {/* 🔥 6. Applications Route */}
             <Route path="/applications" element={<Applications />} />
+            <Route path="/salaries" element={<Salaries />} />
+            <Route path="ResumeTemplate" element={<ResumeTemplates/>} />
 
             <Route path="/companies" element={<Companies />} />
             <Route path="/resources" element={<Resources />} />
