@@ -22,7 +22,6 @@ function App() {
   
   const [user, setUser] = useState(null);
 
- 
   useEffect(() => {
     const storedUser = localStorage.getItem("jobflow_user");
     if (storedUser) {
@@ -30,7 +29,6 @@ function App() {
     }
   }, []);
 
- 
   const handleLogout = () => {
     localStorage.removeItem("jobflow_user");
     setUser(null);
@@ -39,35 +37,35 @@ function App() {
   return (
     <Router>
       <div className="App flex flex-col min-h-screen">
-        {/* 🔥 4. Pass user and onLogout to NavBar */}
         <NavBar user={user} onLogout={handleLogout} />
         
         <main className="flex-grow">
           <Routes>
+            {/* Home */}
             <Route
               path="/"
               element={
                 <>
-                <Hero />
+                  <Hero />
                   <Career />
                   <Dream /> 
                 </>
               }
             />
-            {/* pages */}
             
+            {/* Auth */}
             <Route path="/signin" element={<SignIn setUser={setUser} />} />
             <Route path="/register" element={<Register setUser={setUser} />} />
 
-            
+            {/* App Pages */}
             <Route path="/jobs" element={<Jobs />} /> 
             <Route path="/jobs/:id" element={<JobDetail />}/>
             <Route path="/saved" element={<SavedJobs />}/>
-            
             <Route path="/applications" element={<Applications />} />
+            
+            {/* Resources */}
             <Route path="/salaries" element={<Salaries />} />
-            <Route path="ResumeTemplate" element={<ResumeTemplates/>} />
-
+            <Route path="/resume-templates" element={<ResumeTemplates />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/resources" element={<Resources />} />
           </Routes>
