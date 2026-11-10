@@ -10,7 +10,7 @@ const POPULAR_SEARCHES = ["Frontend Developer", "Product Designer", "Data Analys
 
 const RESOURCE_ITEMS = [
   { name: "Career Advice", to: "/resources" },
-  { name: "Resume Templates", to: "/resources?tab=resume-templates" }, // adjust to your route
+{ name: "Resume Templates", to: "/resume-templates" },
   { name: "Salary Guide", to: "/salaries" },
 ];
 
