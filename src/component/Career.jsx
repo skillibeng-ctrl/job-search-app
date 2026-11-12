@@ -1,5 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom"; // not using React Router? swap <Link to> for <a href>
+import { Link, useNavigate } from "react-router-dom"; // not using React Router? swap <Link to> for <a href>
 import {
   ArrowRight, Briefcase, CheckCircle2, Code, Globe,
   LineChart, Megaphone, PenTool, ShieldCheck,
@@ -335,7 +335,7 @@ function Hero({
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0),white_70%)]" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 lg:px-8 lg:pb-24 lg:pt-16">
+      <div className="mx-auto max-w-7xl px-4 pb-14 pt-10 sm:px-6 lg:px-8 lg:pb-16 lg:pt-14">
         <div className="grid items-center gap-12 lg:grid-cols-12">
           {/* ============ LEFT ============ */}
           <div className="lg:col-span-7">
@@ -349,7 +349,7 @@ function Hero({
             </div>
 
             {/* headline */}
-            <h1 className="mt-5 text-4xl font-bold leading-[1.1] tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-4 text-4xl font-bold leading-[1.1] tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
               Find the job that{" "}
               <span className="bg-gradient-to-r from-emerald-600 to-teal-700 bg-clip-text text-transparent">
                 actually fits
@@ -357,7 +357,7 @@ function Hero({
               you.
             </h1>
 
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg">
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-gray-600 sm:text-lg">
               Curated openings matched to your skills. No dead listings, no spam, no endless scrolling.
             </p>
 
@@ -367,7 +367,7 @@ function Hero({
                 onSubmit={submit}
                 role="search"
                 aria-label="Job search"
-                className="mt-8 rounded-2xl border border-gray-200 bg-white p-2 shadow-lg shadow-gray-200/50 transition focus-within:border-emerald-300 focus-within:ring-4 focus-within:ring-emerald-500/10 sm:flex sm:items-center sm:gap-1"
+                className="mt-6 rounded-2xl border border-gray-200 bg-white p-2 shadow-lg shadow-gray-200/50 transition focus-within:border-emerald-300 focus-within:ring-4 focus-within:ring-emerald-500/10 sm:flex sm:items-center sm:gap-1"
               >
                 {/* ROLE */}
                 <div className="relative flex-1">
@@ -482,9 +482,9 @@ function Hero({
             {/* employer link */}
             <p className="mt-6 text-sm text-gray-600">
               Hiring?{" "}
-              <a href="/employers/post" className="font-medium text-emerald-700 underline-offset-4 hover:underline">
+              <Link to="/register?role=employer" className="font-medium text-emerald-700 underline-offset-4 hover:underline">
                 Post a job in 3 minutes →
-              </a>
+              </Link>
             </p>
 
             {/* trusted-by strip */}
@@ -601,12 +601,12 @@ function Hero({
 /* ============================= content ============================= */
 
 const CATEGORIES = [
-  { name: "Engineering", desc: "Frontend, backend, mobile and DevOps.", icon: Code },
-  { name: "Design", desc: "Product, UX research and brand design.", icon: PenTool },
-  { name: "Data", desc: "Analytics, data science and engineering.", icon: LineChart },
-  { name: "Product", desc: "Product management and strategy.", icon: Briefcase },
-  { name: "Marketing", desc: "Growth, content and communications.", icon: Megaphone },
-  { name: "Remote", desc: "Work from anywhere, any field.", icon: Globe },
+  { name: "Engineering", desc: "Frontend, backend, mobile and DevOps.", icon: Code, to: "/jobs?q=Engineer" },
+  { name: "Design", desc: "Product, UX research and brand design.", icon: PenTool, to: "/jobs?q=Designer" },
+  { name: "Data", desc: "Analytics, data science and engineering.", icon: LineChart, to: "/jobs?q=Data" },
+  { name: "Product", desc: "Product management and strategy.", icon: Briefcase, to: "/jobs?q=Product" },
+  { name: "Marketing", desc: "Growth, content and communications.", icon: Megaphone, to: "/jobs?q=Marketing" },
+  { name: "Remote", desc: "Work from anywhere, any field.", icon: Globe, to: "/jobs?loc=Remote" },
 ];
 
 const BENEFITS = [
@@ -640,7 +640,7 @@ const FAQ = [
 
 function SectionHeading({ eyebrow, title, children, center = true }) {
   return (
-    <div className={center ? "mx-auto mb-12 max-w-2xl text-center" : ""}>
+    <div className={center ? "mx-auto mb-8 max-w-2xl text-center" : ""}>
       {eyebrow && (
         <p className="mb-2 text-sm font-bold uppercase tracking-wider text-emerald-700">{eyebrow}</p>
       )}
@@ -656,9 +656,9 @@ function Career() {
   return (
     <div className="bg-white">
       {/* ================= WHY SWITCH ================= */}
-      <section aria-labelledby="why-heading" className="border-y border-gray-200 bg-gray-50 py-24">
+      <section aria-labelledby="why-heading" className="border-y border-gray-200 bg-gray-50 py-14 sm:py-16">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <h2 id="why-heading" className="mb-12 text-center text-3xl font-bold text-gray-900">
+          <h2 id="why-heading" className="mb-8 text-center text-3xl font-bold text-gray-900">
             Why people switch to JobFlow
           </h2>
           <div className="grid gap-6 md:grid-cols-3">
@@ -676,11 +676,11 @@ function Career() {
       </section>
 
       {/* ================= HOW IT WORKS ================= */}
-      <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6">
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
         <SectionHeading eyebrow="How it works" title="From profile to offer in three steps">
           No endless scrolling. Tell us what you want once, and we do the filtering.
         </SectionHeading>
-        <ol className="grid gap-12 md:grid-cols-3">
+        <ol className="grid gap-10 md:grid-cols-3">
           {STEPS.map((step, i) => (
             <li key={step.title}>
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-xl font-bold text-white" aria-hidden>
@@ -694,8 +694,8 @@ function Career() {
       </section>
 
       {/* ================= TRUST & SAFETY ================= */}
-      <section className="border-y border-gray-200 bg-gray-50 py-24">
-        <div className="mx-auto grid max-w-7xl items-center gap-16 px-4 sm:px-6 md:grid-cols-2">
+      <section className="border-y border-gray-200 bg-gray-50 py-14 sm:py-16">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 md:grid-cols-2">
           <div className="rounded-2xl bg-[#0a1f1c] p-8 text-white shadow-2xl">
             <p className="mb-6 text-xs font-bold uppercase tracking-wider text-emerald-400">
               Before a role goes live
@@ -724,15 +724,15 @@ function Career() {
       </section>
 
       {/* ================= CATEGORIES ================= */}
-      <section className="mx-auto max-w-7xl px-4 py-24 sm:px-6">
+      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-16">
         <SectionHeading eyebrow="Browse by field" title="Explore roles in your field">
           Start with a category, then narrow by location, salary and work style.
         </SectionHeading>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-          {CATEGORIES.map(({ name, desc, icon: Icon }) => (
+          {CATEGORIES.map(({ name, desc, icon: Icon, to }) => (
             <Link
               key={name}
-              to={`/jobs?category=${encodeURIComponent(name)}`}
+              to={to}
               className="group rounded-2xl border border-gray-200 bg-white p-6 transition-all hover:border-emerald-300 hover:shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600"
             >
               <div className="mb-3 flex items-center gap-3">
@@ -746,8 +746,8 @@ function Career() {
       </section>
 
       {/* ================= FOR EMPLOYERS ================= */}
-      <section className="border-y border-gray-200 bg-gray-50 py-24">
-        <div className="mx-auto grid max-w-7xl items-center gap-16 px-4 sm:px-6 md:grid-cols-2">
+      <section className="border-y border-gray-200 bg-gray-50 py-14 sm:py-16">
+        <div className="mx-auto grid max-w-7xl items-center gap-12 px-4 sm:px-6 md:grid-cols-2">
           <div>
             <p className="mb-2 text-xs font-bold uppercase tracking-wider text-emerald-700">For employers</p>
             <h2 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">Hiring? Post a job in 3 minutes</h2>
@@ -755,7 +755,7 @@ function Career() {
               Reach candidates who already match your requirements. Describe the role, set the salary range, and we show it to people whose skills fit.
             </p>
             <Link
-              to="/employers/post"
+              to="/register?role=employer"
               className="inline-block rounded-xl bg-gray-900 px-8 py-3 font-semibold text-white transition-colors hover:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-gray-900"
             >
               Post a job
@@ -775,8 +775,8 @@ function Career() {
       </section>
 
       {/* ================= FAQ ================= */}
-      <section className="mx-auto max-w-3xl px-4 py-24 sm:px-6">
-        <h2 className="mb-10 text-center text-3xl font-bold text-gray-900 md:text-4xl">Questions, answered</h2>
+      <section className="mx-auto max-w-3xl px-4 py-14 sm:px-6 sm:py-16">
+        <h2 className="mb-8 text-center text-3xl font-bold text-gray-900 md:text-4xl">Questions, answered</h2>
         <Accordion type="single" collapsible className="w-full">
           {FAQ.map(({ q, a }, i) => (
             <AccordionItem key={q} value={`faq-${i}`}>
@@ -797,10 +797,22 @@ function Career() {
 // preview, badge) are passed straight to Hero. Hero and Career are also named exports.
 export { Hero, Career };
 
-export default function Landing(heroProps) {
+export default function Landing({ onSearch, ...heroProps }) {
+  const navigate = useNavigate();
+
+  // Without a custom handler, send the search to the Jobs page (it reads ?q= and ?loc=).
+  const goSearch =
+    onSearch ??
+    (({ role, location }) => {
+      const params = new URLSearchParams();
+      if (role) params.set("q", role);
+      if (location) params.set("loc", location);
+      navigate(`/jobs?${params}`);
+    });
+
   return (
     <>
-      <Hero {...heroProps} />
+      <Hero onSearch={goSearch} {...heroProps} />
       <Career />
     </>
   );
