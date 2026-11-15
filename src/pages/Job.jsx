@@ -18,7 +18,7 @@ import { ChevronLeft, ChevronRight, MapPin, Search, SlidersHorizontal, X } from 
 
 /* ============================= api layer ============================= */
 
-const USE_MOCK = true;  // flip to false when your endpoints exist
+const USE_MOCK = false;
 const API_BASE = "";    // e.g. "https://api.yoursite.com"
 const PAGE_SIZE = 10;
 
