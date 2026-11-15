@@ -5,12 +5,14 @@ import { ArrowRight, Bell, ChevronDown, Globe, Heart, MapPin, Menu, Search, X } 
 /* ============================= config ============================= */
 
 const CATEGORIES = ["Engineering", "Design", "Data", "Product", "Marketing"];
+const CATEGORY_QUERY = { Engineering: "Engineer", Design: "Designer" }; // Jobs page searches by keyword
 const DEFAULT_CITIES = ["Lagos", "Abuja", "Nairobi", "London", "New York"];
 const POPULAR_SEARCHES = ["Frontend Developer", "Product Designer", "Data Analyst"];
 
 const RESOURCE_ITEMS = [
   { name: "Career Advice", to: "/resources" },
-{ name: "Resume Templates", to: "/resume-templates" },
+  { name: "Resume Templates", to: "/resume-templates" },
+  { name: "Resume Match", to: "/match" },
   { name: "Salary Guide", to: "/salaries" },
 ];
 
@@ -276,13 +278,14 @@ export default function NavBar({
   const seekerMenu = [
     { name: "My Applications", to: "/applications", badge: appliedCount },
     { name: "Saved Jobs", to: "/saved", badge: savedCount },
+    { name: "Resume Match", to: "/match" },
     { name: "Profile", to: "/profile", divider: true },
     { name: "Settings", to: "/settings" },
     { name: "Help", to: "/help" },
   ];
   const menuItems = isEmployer ? EMPLOYER_MENU : seekerMenu;
 
-  const resourcesActive = pathname.startsWith("/resources") || pathname.startsWith("/salaries");
+  const resourcesActive = ["/resources", "/salaries", "/resume-templates", "/match"].some((p) => pathname.startsWith(p));
 
   /* ---- shared bits ---- */
   const triggerProps = (name, label) => ({
@@ -346,17 +349,17 @@ export default function NavBar({
                         <div>
                           <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">By field</p>
                           {CATEGORIES.map((c) => (
-                            <Link key={c} to={`/jobs?category=${encodeURIComponent(c)}`} className={menuItemClass}>{c}</Link>
+                            <Link key={c} to={`/jobs?q=${encodeURIComponent(CATEGORY_QUERY[c] ?? c)}`} className={menuItemClass}>{c}</Link>
                           ))}
                         </div>
                         <div>
                           <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">By place</p>
                           {cities.map((c) => (
-                            <Link key={c} to={`/jobs?location=${encodeURIComponent(c)}`} className={`${menuItemClass} flex items-center gap-2`}>
+                            <Link key={c} to={`/jobs?loc=${encodeURIComponent(c)}`} className={`${menuItemClass} flex items-center gap-2`}>
                               <MapPin className="h-3.5 w-3.5 text-gray-500" aria-hidden />{c}
                             </Link>
                           ))}
-                          <Link to="/jobs?location=Remote" className={`${menuItemClass} flex items-center gap-2`}>
+                          <Link to="/jobs?loc=Remote" className={`${menuItemClass} flex items-center gap-2`}>
                             <Globe className="h-3.5 w-3.5 text-gray-500" aria-hidden />Remote
                           </Link>
                         </div>
