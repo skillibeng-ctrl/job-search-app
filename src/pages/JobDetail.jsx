@@ -3,7 +3,6 @@ import { ArrowLeft, MapPin, Briefcase, Clock, ExternalLink, ShieldAlert } from "
 import { MOCK_JOBS } from "../data/jobs";
 import JobCard from "../component/JobCard";
 
-// Helpers (copied from JobCard to keep it simple)
 function timeAgo(iso) {
   const diff = Date.now() - new Date(iso).getTime();
   const hours = Math.floor(diff / 3.6e6);
