@@ -8,18 +8,12 @@ import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, MapPin, Search, SlidersHorizontal, X } from "lucide-react";
 
 /* =====================================================================
-   BACKEND CONTRACT (when you're ready)
-
-   GET    /api/jobs?q=&loc=&remote=&seniority=&postedWithin=&minSalary=
-                   &sort=recent|salary&page=1&pageSize=10
-          -> { jobs: Job[], total: number }      (total = ALL matches, not just this page)
-   PUT    /api/jobs/:id/save   (DELETE to unsave)
+   BACKEND CONTRACT
+   When you are ready to connect Supabase/Node, set USE_MOCK to false.
    ===================================================================== */
 
-/* ============================= api layer ============================= */
-
-const USE_MOCK = false;
-const API_BASE = "";    // e.g. "https://api.yoursite.com"
+const USE_MOCK = true; // 🔥 Set to false when your backend is live!
+const API_BASE = "";    
 const PAGE_SIZE = 10;
 
 async function request(path, options = {}) {
@@ -28,7 +22,6 @@ async function request(path, options = {}) {
   return res.status === 204 ? null : res.json();
 }
 
-// Mirrors what the real backend should do: filter, sort, then slice one page.
 function searchMock(filters, sort, page) {
   let results = [...MOCK_JOBS];
 
@@ -92,20 +85,19 @@ function readSaved() {
   }
 }
 
-// Saved jobs: localStorage today, API call ready for when users have accounts.
 function useSavedJobs() {
   const [saved, setSaved] = useState(readSaved);
 
   useEffect(() => {
-    const sync = () => setSaved(readSaved()); // changes made in another tab
+    const sync = () => setSaved(readSaved()); 
     window.addEventListener("storage", sync);
     return () => window.removeEventListener("storage", sync);
   }, []);
 
   const persist = (next) => {
     setSaved(next);
-    try { localStorage.setItem("savedJobs", JSON.stringify(next)); } catch { /* storage blocked */ }
-    window.dispatchEvent(new Event("jobsUpdated")); // keeps the navbar badge in sync
+    try { localStorage.setItem("savedJobs", JSON.stringify(next)); } catch { }
+    window.dispatchEvent(new Event("jobsUpdated")); 
   };
 
   const toggle = async (id) => {
@@ -220,13 +212,12 @@ export default function Jobs() {
   const { filters, setFilters } = useJobFilters();
   const page = Math.max(1, parseInt(filters.page, 10) || 1);
 
-  const [sort, setSort] = useState("recent"); // move into useJobFilters to put it in the URL
+  const [sort, setSort] = useState("recent"); 
   const [data, setData] = useState(null);
-  const [status, setStatus] = useState("loading"); // loading | success | error
+  const [status, setStatus] = useState("loading"); 
   const [reloadKey, setReloadKey] = useState(0);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  // search inputs follow the URL, so Back, "clear" and shared links update them
   const [q, setQ] = useState(filters.q ?? "");
   const [loc, setLoc] = useState(filters.loc ?? "");
   useEffect(() => { setQ(filters.q ?? ""); setLoc(filters.loc ?? ""); }, [filters.q, filters.loc]);
@@ -235,7 +226,6 @@ export default function Jobs() {
   const filterButtonRef = useRef(null);
   const resultsRef = useRef(null);
 
-  // any filter change returns to page 1
   const updateFilters = useCallback(
     (patch) => setFilters("page" in patch ? patch : { ...patch, page: 1 }),
     [setFilters]
@@ -257,7 +247,6 @@ export default function Jobs() {
   const total = data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // if filters shrink the results below the current page, go back to the last page
   useEffect(() => {
     if (status === "success" && page > totalPages) updateFilters({ page: totalPages });
   }, [status, page, totalPages, updateFilters]);
@@ -293,7 +282,7 @@ export default function Jobs() {
   const to = Math.min(page * PAGE_SIZE, total);
 
   return (
-    <main id="main" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <main id="main" className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 mt-16">
       <style>{CSS}</style>
       <h1 className="mb-4 text-2xl font-bold tracking-tight text-gray-900">Find jobs</h1>
 
