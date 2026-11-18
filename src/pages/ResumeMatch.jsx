@@ -21,8 +21,8 @@ import { AlertTriangle, ArrowRight, Check, FileText, Loader2, Trash2, Upload } f
    Errors: 413 too large, 415 wrong type, 422 couldn't read text, 429 limit reached.
    ===================================================================== */
 
-const USE_MOCK = true; // flip to false when your endpoints exist
-const API_BASE = "";
+const USE_MOCK = false;
+const API_BASE = "http://localhost:4000";
 const MAX_BYTES = 5 * 1024 * 1024;
 const OK_EXT = [".pdf", ".docx", ".txt"];
 
