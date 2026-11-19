@@ -5,16 +5,17 @@ import rateLimit from "express-rate-limit";
 import multer from "multer";
 import pdf from "pdf-parse";
 import OpenAI from "openai";
-import "dotenv/config"; // Load .env variables
+import "dotenv/config"; 
 import { db } from "./db.js";
+import templatesRouter from "./templates.js";
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// 🔥 Initialize OpenAI
+// Initialize OpenAI
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-// 🔥 Setup File Upload (Memory storage for quick parsing, 5MB limit)
+// Setup File Upload (Memory storage, 5MB limit)
 const upload = multer({ 
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 } 
@@ -22,7 +23,7 @@ const upload = multer({
 
 app.use(helmet());
 app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173", credentials: true }));
-// Increased limit to 5mb to allow large pasted resume text
+// Increased to 5mb to allow pasted resume text
 app.use(express.json({ limit: "5mb" })); 
 
 app.use("/api", rateLimit({ windowMs: 15 * 60 * 1000, limit: 300, standardHeaders: true, legacyHeaders: false }));
@@ -49,11 +50,11 @@ const toApi = (r, withDescription = false) => ({
 const like = (s) => `%${String(s).replace(/[\\%_]/g, "\\$&")}%`;
 const int = (v, fallback) => (Number.isFinite(parseInt(v, 10)) ? parseInt(v, 10) : fallback);
 
-app.get("/api/health", (_req, res) => res.json({ ok: true }));
+/* ========================================================= */
+/* EXISTING ROUTES                                           */
+/* ========================================================= */
 
-/* ========================================================= */
-/* EXISTING JOBS ROUTES                                      */
-/* ========================================================= */
+app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
 app.get("/api/jobs", (req, res) => {
   const { q, loc, remote, seniority, postedWithin, minSalary, sort } = req.query;
@@ -113,11 +114,14 @@ app.get("/api/jobs/:id", (req, res) => {
   res.json({ job: toApi(row, true) });
 });
 
+// Keep your templates route
+app.use(templatesRouter);
+
 /* ========================================================= */
-/* 🔥 NEW AI & RESUME ROUTES                                 */
+/* 🔥 AI & RESUME ROUTES                                     */
 /* ========================================================= */
 
-// Temporary in-memory storage for resumes (In production, save this to the DB)
+// Temporary in-memory storage for resumes
 const resumes = new Map();
 
 // 1. Upload & Parse Resume
@@ -126,23 +130,20 @@ app.post("/api/resume", upload.single("file"), async (req, res) => {
     let resumeText = "";
     
     if (req.file) {
-      // If it's a PDF, extract the text
       if (req.file.mimetype === "application/pdf") {
         const data = await pdf(req.file.buffer);
         resumeText = data.text;
       } else {
-        // Assume it's plain text
         resumeText = req.file.buffer.toString("utf-8");
       }
     } else if (req.body.text) {
-      // If user pasted text instead of uploading a file
       resumeText = req.body.text;
     } else {
       return res.status(400).json({ message: "No file or text provided." });
     }
 
     const resumeId = "res_" + Date.now();
-    resumes.set(resumeId, resumeText); // Store in memory
+    resumes.set(resumeId, resumeText); 
 
     res.json({ 
       resume: { 
@@ -167,9 +168,7 @@ app.post("/api/match", async (req, res) => {
   }
 
   try {
-    // Loop through the requested jobs and ask AI to compare
     const results = await Promise.all(jobIds.map(async (id) => {
-      // Fetch the job from YOUR existing database
       const row = db
         .prepare(`SELECT j.*, c.name AS company_name FROM jobs j JOIN companies c ON c.id = j.company_id WHERE j.id = ?`)
         .get(int(id, -1));
@@ -179,7 +178,7 @@ app.post("/api/match", async (req, res) => {
       const prompt = `
         You are an expert tech recruiter. Compare the following resume to the job description.
         
-        RESUME: ${resumeText.substring(0, 3000)} // Truncated to save tokens
+        RESUME: ${resumeText.substring(0, 3000)}
         
         JOB TITLE: ${row.title}
         JOB DESCRIPTION: ${row.description || "No description provided."}
@@ -210,9 +209,8 @@ app.post("/api/match", async (req, res) => {
   }
 });
 
-/* ========================================================= */
-
 app.use("/api", (_req, res) => res.status(404).json({ message: "Not found." }));
+app.use(templatesRouter);
 app.use((err, _req, res, _next) => {
   console.error(err);
   res.status(500).json({ message: "Something went wrong." });
