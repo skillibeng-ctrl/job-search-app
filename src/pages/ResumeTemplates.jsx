@@ -7,14 +7,14 @@ import { ArrowRight, Download, LayoutTemplate, Lock, Star } from "lucide-react";
    BACKEND CONTRACT (when you're ready)
 
    GET  /api/resume-templates                -> { templates: Template[] }
-   POST /api/resume-templates/:id/download   body: { format }   (analytics)
+   GET  /api/resume-templates/:id/download/:label   -> the file (the server counts it; Pro returns 403)
 
    Template = {
      id, title, description, isPremium, accent (css colour, e.g. "#047857"),
      layout: "single" | "two-column" | "creative" | "minimal",
      tags: string[],
      previewUrl?,                       // optional screenshot; a drawn mockup is used if missing
-     files: [{ label: "PDF", url }]     // one entry per downloadable format
+     files: [{ label: "Word", url }]    // one entry per downloadable format
    }
 
    IMPORTANT: Pro files must be protected on the server (check the user's
@@ -23,7 +23,7 @@ import { ArrowRight, Download, LayoutTemplate, Lock, Star } from "lucide-react";
 
 /* ============================= api layer ============================= */
 
-const USE_MOCK = true;  // flip to false when your endpoints exist
+const USE_MOCK = false; // true = sample data, false = your own API (server/templates.js)
 const API_BASE = "";    // e.g. "https://api.yoursite.com"
 
 async function request(path, options = {}) {
@@ -40,14 +40,6 @@ const api = {
     }
     const data = await request("/api/resume-templates", { signal });
     return data.templates;
-  },
-  async trackDownload(id, format) {
-    if (USE_MOCK) return;
-    await request(`/api/resume-templates/${id}/download`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ format }),
-    });
   },
 };
 
@@ -73,7 +65,7 @@ const GUIDE = [
 ];
 
 const STEPS = [
-  { title: "Choose and download", text: "Take the PDF to apply as-is, or the editable file (Word or Figma) to make it yours." },
+  { title: "Download and open", text: "Open the Word file in Word, Google Docs or LibreOffice, then fill in your details." },
   { title: "Replace the sample text", text: "Swap in your own details. Keep headings simple and results specific, with numbers where you can." },
   { title: "Export and name it clearly", text: "Save as PDF with a clear name like FirstName-LastName-Resume.pdf before you send it." },
 ];
@@ -153,7 +145,7 @@ function Chip({ active, onClick, children }) {
 
 /* ============================= card ============================= */
 
-function TemplateCard({ t, canDownload, upgradeHref, onDownload }) {
+function TemplateCard({ t, canDownload, proEnabled, upgradeHref, onDownload }) {
   const locked = t.isPremium && !canDownload;
 
   return (
@@ -185,7 +177,11 @@ function TemplateCard({ t, canDownload, upgradeHref, onDownload }) {
         </ul>
 
         <div className="mt-auto flex gap-2">
-          {locked ? (
+          {locked && !proEnabled ? (
+            <p className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-dashed border-amber-300 bg-amber-50 py-2.5 text-sm font-semibold text-amber-900">
+              <Lock className="h-4 w-4" aria-hidden /> Pro · coming soon
+            </p>
+          ) : locked ? (
             <Link to={upgradeHref} className={`flex flex-1 items-center justify-center gap-2 rounded-lg bg-amber-500 py-2.5 text-sm font-semibold text-gray-900 transition-colors hover:bg-amber-400 ${FOCUS}`}>
               <Lock className="h-4 w-4" aria-hidden /> Unlock with Pro
             </Link>
@@ -213,7 +209,8 @@ function TemplateCard({ t, canDownload, upgradeHref, onDownload }) {
 
 /* ============================= page ============================= */
 
-export default function ResumeTemplates({ isPro = false, upgradeHref = "/pricing" }) {
+// isPro: this visitor has Pro.  proEnabled: Pro is actually on sale (turn on once payments exist).
+export default function ResumeTemplates({ isPro = false, proEnabled = false, upgradeHref = "/pricing" }) {
   const [templates, setTemplates] = useState([]);
   const [status, setStatus] = useState("loading"); // loading | ready | error
   const [price, setPrice] = useState("all");
@@ -241,7 +238,6 @@ export default function ResumeTemplates({ isPro = false, upgradeHref = "/pricing
 
   const handleDownload = (t, file) => {
     toast.success(`Downloading ${t.title} (${file.label})`);
-    api.trackDownload(t.id, file.label).catch(() => {});
   };
 
   const clearFilters = () => { setPrice("all"); setLayout("all"); };
@@ -253,13 +249,13 @@ export default function ResumeTemplates({ isPro = false, upgradeHref = "/pricing
         <header className="mx-auto mb-12 max-w-3xl text-center">
           <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800">
             <LayoutTemplate className="h-4 w-4" aria-hidden />
-            {status === "ready" ? `${freeCount} free · ${proCount} Pro` : "Resume templates"}
+            {status === "ready" ? (proCount > 0 && !proEnabled ? `${freeCount} free · Pro coming soon` : `${freeCount} free · ${proCount} Pro`) : "Resume templates"}
           </p>
           <h1 className="mb-6 text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl">
             Resume templates, <span className="text-emerald-700">ready to fill in.</span>
           </h1>
           <p className="text-lg text-gray-600">
-            Skip the formatting fight. Pick a layout, replace the sample text with your own details, and download it as a PDF or an editable file.
+            Skip the formatting fight. Pick a layout, replace the sample text with your own details, and download an editable Word file.
           </p>
         </header>
 
@@ -309,7 +305,7 @@ export default function ResumeTemplates({ isPro = false, upgradeHref = "/pricing
           <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {filtered.map((t) => (
               <li key={t.id}>
-                <TemplateCard t={t} canDownload={isPro} upgradeHref={upgradeHref} onDownload={handleDownload} />
+                <TemplateCard t={t} canDownload={isPro} proEnabled={proEnabled} upgradeHref={upgradeHref} onDownload={handleDownload} />
               </li>
             ))}
           </ul>
