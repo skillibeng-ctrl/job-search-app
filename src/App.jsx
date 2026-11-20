@@ -18,6 +18,7 @@ import Register from "./pages/Register";
 import Salaries from "./pages/Salaries";
 import ResumeTemplates from "./pages/ResumeTemplates";
 import ResumeMatch from "./pages/ResumeMatch";
+import ResumeBuilder from "./pages/ResumeBuilder";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -70,6 +71,7 @@ function App() {
             <Route path="/resume-templates" element={<ResumeTemplates />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/resources" element={<Resources />} />
+            <Route path="/resume-builder" element={<ResumeBuilder />} />
           </Routes>
         </div>
 
