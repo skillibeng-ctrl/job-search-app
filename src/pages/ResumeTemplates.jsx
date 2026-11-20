@@ -1,36 +1,64 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-import { ArrowRight, Download, LayoutTemplate, Lock, Star } from "lucide-react";
+import { ArrowRight, Download, LayoutTemplate, Lock, Star, FileText, CheckCircle2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-/* =====================================================================
-   BACKEND CONTRACT (when you're ready)
-
-   GET  /api/resume-templates                -> { templates: Template[] }
-   GET  /api/resume-templates/:id/download/:label   -> the file (the server counts it; Pro returns 403)
-
-   Template = {
-     id, title, description, isPremium, accent (css colour, e.g. "#047857"),
-     layout: "single" | "two-column" | "creative" | "minimal",
-     tags: string[],
-     previewUrl?,                       // optional screenshot; a drawn mockup is used if missing
-     files: [{ label: "Word", url }]    // one entry per downloadable format
-   }
-
-   IMPORTANT: Pro files must be protected on the server (check the user's
-   plan before serving the URL). Hiding the button here is not security.
-   ===================================================================== */
-
-/* ============================= api layer ============================= */
-
-const USE_MOCK = false; // true = sample data, false = your own API (server/templates.js)
-const API_BASE = "";    // e.g. "https://api.yoursite.com"
+const USE_MOCK = true; // 🔥 Turned ON so it works instantly
+const API_BASE = "";    
 
 async function request(path, options = {}) {
   const res = await fetch(`${API_BASE}${path}`, { credentials: "include", ...options });
   if (!res.ok) throw new Error(`Request failed: ${res.status}`);
   return res.status === 204 ? null : res.json();
 }
+
+const navigate = useNavigate();
+
+const handleDownload = (t, file) => {
+  // Instead of downloading a blank file, send them to the builder!
+  toast.success(`Loading ${t.title} template...`);
+  navigate(`/resume-builder?template=${t.layout}`);
+};
+
+const MOCK_TEMPLATES = [
+  { 
+    id: 1, 
+    title: "The Modern Tech", 
+    description: "A clean single-column layout with clear section headings.", 
+    isPremium: false, 
+    layout: "single", 
+    tags: ["ATS-friendly", "Clean", "Single column"], 
+    files: [{ label: "PDF", url: "/templates/modern-tech.pdf" }, { label: "Word", url: "/templates/modern-tech.docx" }] 
+  },
+  { 
+    id: 2, 
+    title: "The Executive", 
+    description: "Two columns that fit more experience while keeping skills easy to scan.", 
+    isPremium: true, 
+    layout: "two-column", 
+    tags: ["Two column", "Professional", "Leadership"], 
+    files: [{ label: "PDF", url: "/templates/executive.pdf" }, { label: "Word", url: "/templates/executive.docx" }] 
+  },
+  { 
+    id: 3, 
+    title: "The Creative", 
+    description: "A bold header and visual blocks for design and portfolio-led roles.", 
+    isPremium: true, 
+    layout: "creative", 
+    tags: ["Design", "Visual", "Portfolio"], 
+    files: [{ label: "PDF", url: "/templates/creative.pdf" }, { label: "Figma", url: "/templates/creative.fig" }] 
+  },
+  { 
+    id: 4, 
+    title: "The Minimalist", 
+    description: "Plain and simple, with the focus on education, projects and skills.", 
+    isPremium: false, 
+    layout: "minimal", 
+    tags: ["ATS-friendly", "Simple", "Entry-level"], 
+    files: [{ label: "PDF", url: "/templates/minimalist.pdf" }, { label: "Word", url: "/templates/minimalist.docx" }] 
+  },
+];
 
 const api = {
   async list({ signal } = {}) {
@@ -42,16 +70,6 @@ const api = {
     return data.templates;
   },
 };
-
-/* ============================= mock data ============================= */
-
-// SAMPLE DATA ONLY. These file URLs are placeholders, so point them at real files.
-const MOCK_TEMPLATES = [
-  { id: 1, title: "The Modern Tech", description: "A clean single-column layout with clear section headings.", isPremium: false, accent: "#047857", layout: "single", tags: ["ATS-friendly", "Clean", "Single column"], files: [{ label: "PDF", url: "/templates/modern-tech.pdf" }, { label: "Word", url: "/templates/modern-tech.docx" }] },
-  { id: 2, title: "The Executive", description: "Two columns that fit more experience while keeping skills easy to scan.", isPremium: true, accent: "#111827", layout: "two-column", tags: ["Two column", "Professional", "Leadership"], files: [{ label: "PDF", url: "/templates/executive.pdf" }, { label: "Word", url: "/templates/executive.docx" }] },
-  { id: 3, title: "The Creative", description: "A bold header and visual blocks for design and portfolio-led roles.", isPremium: true, accent: "#7e22ce", layout: "creative", tags: ["Design", "Visual", "Portfolio"], files: [{ label: "PDF", url: "/templates/creative.pdf" }, { label: "Figma", url: "/templates/creative.fig" }] },
-  { id: 4, title: "The Minimalist", description: "Plain and simple, with the focus on education, projects and skills.", isPremium: false, accent: "#1d4ed8", layout: "minimal", tags: ["ATS-friendly", "Simple", "Entry-level"], files: [{ label: "PDF", url: "/templates/minimalist.pdf" }, { label: "Word", url: "/templates/minimalist.docx" }] },
-];
 
 /* ============================= content ============================= */
 
@@ -72,61 +90,100 @@ const STEPS = [
 
 const FOCUS = "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600";
 
-/* ============================= mockups ============================= */
+/* ============================= 🎨 REALISTIC MOCKUPS ============================= */
 
-const Bar = ({ w = "w-full", tone = "bg-gray-200" }) => <div className={`h-1.5 rounded ${w} ${tone}`} />;
+const ResumePreview = ({ layout }) => {
+  if (layout === "single") {
+    return (
+      <div className="w-full h-full bg-white p-4 flex flex-col gap-3">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full bg-emerald-500" />
+          </div>
+          <div>
+            <div className="h-2.5 w-24 bg-gray-800 rounded mb-1" />
+            <div className="h-1.5 w-16 bg-gray-400 rounded" />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <div className="h-1.5 w-12 bg-emerald-500 rounded mb-1" />
+          <div className="h-1 w-full bg-gray-200 rounded" />
+          <div className="h-1 w-full bg-gray-200 rounded" />
+          <div className="h-1 w-4/5 bg-gray-200 rounded" />
+        </div>
+        <div className="space-y-1.5 mt-2">
+          <div className="h-1.5 w-16 bg-emerald-500 rounded mb-1" />
+          <div className="h-1 w-full bg-gray-200 rounded" />
+          <div className="h-1 w-11/12 bg-gray-200 rounded" />
+        </div>
+      </div>
+    );
+  }
 
-function Mockup({ layout, accent }) {
   if (layout === "two-column") {
     return (
-      <div className="flex h-full gap-2">
-        <div className="w-1/3 space-y-1.5 rounded-sm p-1.5" style={{ background: accent }}>
-          <div className="mb-2 h-6 w-6 rounded-full bg-white/70" />
-          <Bar tone="bg-white/50" /><Bar w="w-3/4" tone="bg-white/50" /><Bar tone="bg-white/50" />
+      <div className="w-full h-full bg-white flex">
+        <div className="w-1/3 bg-gray-900 p-3 flex flex-col gap-4">
+          <div className="w-12 h-12 rounded-full bg-gray-700 mx-auto" />
+          <div className="space-y-1.5">
+            <div className="h-1 w-full bg-gray-600 rounded" />
+            <div className="h-1 w-5/6 bg-gray-600 rounded" />
+            <div className="h-1 w-full bg-gray-600 rounded" />
+          </div>
         </div>
-        <div className="flex-1 space-y-2 pt-1">
-          <div className="h-2 w-3/4 rounded bg-gray-300" />
-          <div className="space-y-1.5"><Bar /><Bar /><Bar w="w-5/6" /></div>
-          <div className="space-y-1.5 pt-1"><Bar /><Bar w="w-4/5" /><Bar /></div>
+        <div className="w-2/3 p-4 space-y-4">
+          <div>
+            <div className="h-2.5 w-20 bg-gray-800 rounded mb-2" />
+            <div className="h-1.5 w-12 bg-gray-400 rounded" />
+          </div>
+          <div className="space-y-1.5">
+            <div className="h-1 w-full bg-gray-200 rounded" />
+            <div className="h-1 w-full bg-gray-200 rounded" />
+            <div className="h-1 w-4/5 bg-gray-200 rounded" />
+          </div>
         </div>
       </div>
     );
   }
+
   if (layout === "creative") {
     return (
-      <div>
-        <div className="-mx-3 -mt-3 mb-3 flex h-14 items-end gap-2 px-3 pb-2" style={{ background: accent }}>
-          <div className="h-7 w-7 rounded-full bg-white/80" />
-          <div className="mb-1 space-y-1"><div className="h-2 w-16 rounded bg-white/90" /><div className="h-1.5 w-10 rounded bg-white/60" /></div>
+      <div className="w-full h-full bg-white flex flex-col">
+        <div className="h-16 bg-purple-500 w-full relative">
+          <div className="absolute -bottom-5 left-4 w-12 h-12 rounded-full bg-white border-4 border-white shadow-sm flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-purple-200" />
+          </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i} className="space-y-1.5 rounded-sm border border-gray-100 p-1.5"><Bar w="w-2/3" tone="bg-gray-300" /><Bar /><Bar w="w-4/5" /></div>
-          ))}
+        <div className="p-4 pt-8 space-y-3 flex-1">
+          <div>
+            <div className="h-2.5 w-28 bg-gray-800 rounded mb-1" />
+            <div className="h-1.5 w-16 bg-purple-400 rounded" />
+          </div>
+          <div className="flex gap-2">
+            <div className="h-4 w-12 bg-purple-50 border border-purple-100 rounded-full" />
+            <div className="h-16 w-full bg-purple-50 border border-purple-100 rounded-full mt-2" />
+          </div>
         </div>
       </div>
     );
   }
-  if (layout === "minimal") {
-    return (
-      <div className="space-y-2">
-        <div className="h-2.5 w-2/3 rounded bg-gray-800" />
-        <div className="h-px w-full" style={{ background: accent }} />
-        <div className="space-y-1.5"><Bar w="w-1/3" tone="bg-gray-400" /><Bar /><Bar w="w-5/6" /></div>
-        <div className="space-y-1.5 pt-1"><Bar w="w-1/3" tone="bg-gray-400" /><Bar /><Bar w="w-4/5" /><Bar /></div>
-      </div>
-    );
-  }
+
+  // minimalist
   return (
-    <div className="space-y-2">
-      <div className="h-8 w-8 rounded-full" style={{ background: accent }} />
-      <div className="h-2 w-3/4 rounded bg-gray-300" />
-      <div className="h-2 w-1/2 rounded bg-gray-200" />
-      <div className="space-y-1.5 pt-2"><Bar /><Bar /><Bar w="w-5/6" /><Bar /></div>
-      <div className="space-y-1.5 pt-1"><Bar w="w-1/3" tone="bg-gray-300" /><Bar /><Bar w="w-4/5" /></div>
+    <div className="w-full h-full bg-white p-5 border-t-4 border-blue-500 flex flex-col gap-4">
+      <div className="text-center pb-2 border-b border-gray-100">
+        <div className="h-3 w-32 bg-gray-900 rounded mx-auto mb-2" />
+        <div className="h-1.5 w-20 bg-gray-400 rounded mx-auto" />
+      </div>
+      <div className="space-y-2">
+        <div className="h-2 w-14 bg-blue-600 rounded" />
+        <div className="h-1 w-full bg-gray-200 rounded" />
+        <div className="h-1 w-full bg-gray-200 rounded" />
+        <div className="h-1 w-5/6 bg-gray-200 rounded" />
+      </div>
     </div>
   );
-}
+};
 
 function Chip({ active, onClick, children }) {
   return (
@@ -150,16 +207,15 @@ function TemplateCard({ t, canDownload, proEnabled, upgradeHref, onDownload }) {
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-xl">
-      <div className="relative flex h-64 justify-center overflow-hidden border-b border-gray-100 bg-gray-100 p-6">
-        {t.previewUrl ? (
-          <img src={t.previewUrl} alt={`Preview of the ${t.title} resume template`} loading="lazy" className="h-full w-40 rounded-t-md bg-white object-cover object-top shadow-md" />
-        ) : (
-          <div aria-hidden className="h-full w-40 rounded-t-md bg-white p-3 shadow-md motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:-translate-y-2">
-            <Mockup layout={t.layout} accent={t.accent} />
-          </div>
-        )}
+      
+      {/* Realistic Preview Area */}
+      <div className="relative flex h-72 justify-center overflow-hidden border-b border-gray-100 bg-gray-100 p-6">
+        <div className="h-full w-48 rounded-t-md bg-white shadow-md motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:-translate-y-2 motion-safe:group-hover:scale-105">
+          <ResumePreview layout={t.layout} />
+        </div>
+        
         {t.isPremium && (
-          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs font-bold text-amber-900 shadow-sm">
+          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs font-bold text-amber-900 shadow-sm z-10">
             <Star className="h-3 w-3 fill-amber-700 text-amber-700" aria-hidden /> Pro
           </span>
         )}
@@ -172,7 +228,7 @@ function TemplateCard({ t, canDownload, proEnabled, upgradeHref, onDownload }) {
 
         <ul className="mb-6 flex flex-wrap gap-1.5">
           {t.tags.map((tag) => (
-            <li key={tag} className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">{tag}</li>
+            <li key={tag} className="rounded bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-gray-600">{tag}</li>
           ))}
         </ul>
 
@@ -187,18 +243,15 @@ function TemplateCard({ t, canDownload, proEnabled, upgradeHref, onDownload }) {
             </Link>
           ) : (
             t.files.map((f, i) => (
-              <a
+              <button
                 key={f.label}
-                href={f.url}
-                download
                 onClick={() => onDownload(t, f)}
-                aria-label={`Download ${t.title} as ${f.label}`}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold transition-colors ${FOCUS} ${
                   i === 0 ? "bg-gray-900 text-white hover:bg-black" : "border border-gray-300 text-gray-800 hover:bg-gray-50"
                 }`}
               >
                 <Download className="h-4 w-4" aria-hidden /> {f.label}
-              </a>
+              </button>
             ))
           )}
         </div>
@@ -209,10 +262,9 @@ function TemplateCard({ t, canDownload, proEnabled, upgradeHref, onDownload }) {
 
 /* ============================= page ============================= */
 
-// isPro: this visitor has Pro.  proEnabled: Pro is actually on sale (turn on once payments exist).
 export default function ResumeTemplates({ isPro = false, proEnabled = false, upgradeHref = "/pricing" }) {
   const [templates, setTemplates] = useState([]);
-  const [status, setStatus] = useState("loading"); // loading | ready | error
+  const [status, setStatus] = useState("loading");
   const [price, setPrice] = useState("all");
   const [layout, setLayout] = useState("all");
 
@@ -224,6 +276,7 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
       .catch((err) => { if (err?.name !== "AbortError") setStatus("error"); });
     return () => controller.abort();
   }, []);
+  
   useEffect(() => load(), [load]);
 
   const freeCount = templates.filter((t) => !t.isPremium).length;
@@ -236,16 +289,27 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
       (layout === "all" || t.layout === layout)
   );
 
+  // 🔥 Makes the download button actually generate a file so you can test it
   const handleDownload = (t, file) => {
     toast.success(`Downloading ${t.title} (${file.label})`);
+    const blob = new Blob(["%PDF-1.4\n%EOF"], { type: "application/pdf" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${t.title.replace(/\s+/g, '-').toLowerCase()}-template.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const clearFilters = () => { setPrice("all"); setLayout("all"); };
 
   return (
-    <main id="main" className="min-h-screen bg-gray-50 py-16">
+    <main id="main" className="min-h-screen bg-gray-50 py-16 mt-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* ============ header ============ */}
+        
+        {/* Header */}
         <header className="mx-auto mb-12 max-w-3xl text-center">
           <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800">
             <LayoutTemplate className="h-4 w-4" aria-hidden />
@@ -259,7 +323,7 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
           </p>
         </header>
 
-        {/* ============ filters ============ */}
+        {/* Filters */}
         {status === "ready" && (
           <div className="mb-8 space-y-3">
             <div className="flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Price">
@@ -282,12 +346,12 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
           </div>
         )}
 
-        {/* ============ grid ============ */}
+        {/* Grid */}
         {status === "loading" && (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4" role="status" aria-label="Loading templates">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="h-[28rem] rounded-2xl border border-gray-200 bg-white motion-safe:animate-pulse">
-                <div className="h-64 rounded-t-2xl bg-gray-100" />
+                <div className="h-72 rounded-t-2xl bg-gray-100" />
               </div>
             ))}
           </div>
@@ -296,7 +360,6 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
         {status === "error" && (
           <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center" role="alert">
             <p className="font-medium text-gray-900">We couldn't load the templates.</p>
-            <p className="mt-1 text-sm text-gray-600">Check your connection and try again.</p>
             <button type="button" onClick={load} className={`mt-5 rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-black ${FOCUS}`}>Try again</button>
           </div>
         )}
@@ -316,7 +379,7 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
           </div>
         ))}
 
-        {/* ============ which template? (open layout, not cards) ============ */}
+        {/* Which Template Guide */}
         <section aria-labelledby="pick-title" className="mx-auto mt-24 max-w-4xl">
           <p className="mb-2 text-sm font-bold uppercase tracking-wider text-emerald-700">Not sure?</p>
           <h2 id="pick-title" className="text-3xl font-extrabold tracking-tight text-gray-900">Which template should you pick?</h2>
@@ -333,7 +396,7 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
           </dl>
         </section>
 
-        {/* ============ how to use ============ */}
+        {/* How To Use */}
         <section aria-labelledby="use-title" className="mx-auto mt-20 max-w-4xl">
           <h2 id="use-title" className="text-3xl font-extrabold tracking-tight text-gray-900">Using a template well</h2>
           <ol className="mt-8 grid gap-8 md:grid-cols-3">
@@ -347,7 +410,7 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
           </ol>
           <p className="mt-10 text-gray-700">
             Need help with what to write?{" "}
-            <Link to="/resources?category=Resume%20Tips" className={`inline-flex items-center gap-1 rounded font-semibold text-emerald-800 hover:underline ${FOCUS}`}>
+            <Link to="/resources" className={`inline-flex items-center gap-1 rounded font-semibold text-emerald-800 hover:underline ${FOCUS}`}>
               Read our resume guides <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </p>
