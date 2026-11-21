@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // 🔥 Make sure useNavigate is imported
 import { toast } from "sonner";
 import { ArrowRight, Download, LayoutTemplate, Lock, Star, FileText, CheckCircle2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
-const USE_MOCK = true; // 🔥 Turned ON so it works instantly
+/* =====================================================================
+   BACKEND CONTRACT
+   ===================================================================== */
+const USE_MOCK = true; 
 const API_BASE = "";    
 
 async function request(path, options = {}) {
@@ -13,13 +15,7 @@ async function request(path, options = {}) {
   return res.status === 204 ? null : res.json();
 }
 
-const navigate = useNavigate();
-
-const handleDownload = (t, file) => {
-  // Instead of downloading a blank file, send them to the builder!
-  toast.success(`Loading ${t.title} template...`);
-  navigate(`/resume-builder?template=${t.layout}`);
-};
+/* ============================= mock data ============================= */
 
 const MOCK_TEMPLATES = [
   { 
@@ -111,15 +107,9 @@ const ResumePreview = ({ layout }) => {
           <div className="h-1 w-full bg-gray-200 rounded" />
           <div className="h-1 w-4/5 bg-gray-200 rounded" />
         </div>
-        <div className="space-y-1.5 mt-2">
-          <div className="h-1.5 w-16 bg-emerald-500 rounded mb-1" />
-          <div className="h-1 w-full bg-gray-200 rounded" />
-          <div className="h-1 w-11/12 bg-gray-200 rounded" />
-        </div>
       </div>
     );
   }
-
   if (layout === "two-column") {
     return (
       <div className="w-full h-full bg-white flex">
@@ -128,7 +118,6 @@ const ResumePreview = ({ layout }) => {
           <div className="space-y-1.5">
             <div className="h-1 w-full bg-gray-600 rounded" />
             <div className="h-1 w-5/6 bg-gray-600 rounded" />
-            <div className="h-1 w-full bg-gray-600 rounded" />
           </div>
         </div>
         <div className="w-2/3 p-4 space-y-4">
@@ -138,14 +127,12 @@ const ResumePreview = ({ layout }) => {
           </div>
           <div className="space-y-1.5">
             <div className="h-1 w-full bg-gray-200 rounded" />
-            <div className="h-1 w-full bg-gray-200 rounded" />
             <div className="h-1 w-4/5 bg-gray-200 rounded" />
           </div>
         </div>
       </div>
     );
   }
-
   if (layout === "creative") {
     return (
       <div className="w-full h-full bg-white flex flex-col">
@@ -167,8 +154,6 @@ const ResumePreview = ({ layout }) => {
       </div>
     );
   }
-
-  // minimalist
   return (
     <div className="w-full h-full bg-white p-5 border-t-4 border-blue-500 flex flex-col gap-4">
       <div className="text-center pb-2 border-b border-gray-100">
@@ -177,7 +162,6 @@ const ResumePreview = ({ layout }) => {
       </div>
       <div className="space-y-2">
         <div className="h-2 w-14 bg-blue-600 rounded" />
-        <div className="h-1 w-full bg-gray-200 rounded" />
         <div className="h-1 w-full bg-gray-200 rounded" />
         <div className="h-1 w-5/6 bg-gray-200 rounded" />
       </div>
@@ -207,13 +191,10 @@ function TemplateCard({ t, canDownload, proEnabled, upgradeHref, onDownload }) {
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-xl">
-      
-      {/* Realistic Preview Area */}
       <div className="relative flex h-72 justify-center overflow-hidden border-b border-gray-100 bg-gray-100 p-6">
         <div className="h-full w-48 rounded-t-md bg-white shadow-md motion-safe:transition-transform motion-safe:duration-300 motion-safe:group-hover:-translate-y-2 motion-safe:group-hover:scale-105">
           <ResumePreview layout={t.layout} />
         </div>
-        
         {t.isPremium && (
           <span className="absolute right-3 top-3 flex items-center gap-1 rounded-md bg-amber-100 px-2 py-1 text-xs font-bold text-amber-900 shadow-sm z-10">
             <Star className="h-3 w-3 fill-amber-700 text-amber-700" aria-hidden /> Pro
@@ -263,6 +244,8 @@ function TemplateCard({ t, canDownload, proEnabled, upgradeHref, onDownload }) {
 /* ============================= page ============================= */
 
 export default function ResumeTemplates({ isPro = false, proEnabled = false, upgradeHref = "/pricing" }) {
+  // 🔥 HOOKS MUST BE INSIDE THE COMPONENT FUNCTION
+  const navigate = useNavigate();
   const [templates, setTemplates] = useState([]);
   const [status, setStatus] = useState("loading");
   const [price, setPrice] = useState("all");
@@ -289,18 +272,10 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
       (layout === "all" || t.layout === layout)
   );
 
-  // 🔥 Makes the download button actually generate a file so you can test it
+  // 🔥 THIS SENDS THEM TO THE BUILDER
   const handleDownload = (t, file) => {
-    toast.success(`Downloading ${t.title} (${file.label})`);
-    const blob = new Blob(["%PDF-1.4\n%EOF"], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${t.title.replace(/\s+/g, '-').toLowerCase()}-template.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    toast.success(`Loading ${t.title} template...`);
+    navigate(`/resume-builder?template=${t.layout}`);
   };
 
   const clearFilters = () => { setPrice("all"); setLayout("all"); };
@@ -309,7 +284,6 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
     <main id="main" className="min-h-screen bg-gray-50 py-16 mt-16">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         
-        {/* Header */}
         <header className="mx-auto mb-12 max-w-3xl text-center">
           <p className="mb-6 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-800">
             <LayoutTemplate className="h-4 w-4" aria-hidden />
@@ -323,7 +297,6 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
           </p>
         </header>
 
-        {/* Filters */}
         {status === "ready" && (
           <div className="mb-8 space-y-3">
             <div className="flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Price">
@@ -346,7 +319,6 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
           </div>
         )}
 
-        {/* Grid */}
         {status === "loading" && (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4" role="status" aria-label="Loading templates">
             {[1, 2, 3, 4].map((i) => (
@@ -379,7 +351,6 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
           </div>
         ))}
 
-        {/* Which Template Guide */}
         <section aria-labelledby="pick-title" className="mx-auto mt-24 max-w-4xl">
           <p className="mb-2 text-sm font-bold uppercase tracking-wider text-emerald-700">Not sure?</p>
           <h2 id="pick-title" className="text-3xl font-extrabold tracking-tight text-gray-900">Which template should you pick?</h2>
@@ -396,7 +367,6 @@ export default function ResumeTemplates({ isPro = false, proEnabled = false, upg
           </dl>
         </section>
 
-        {/* How To Use */}
         <section aria-labelledby="use-title" className="mx-auto mt-20 max-w-4xl">
           <h2 id="use-title" className="text-3xl font-extrabold tracking-tight text-gray-900">Using a template well</h2>
           <ol className="mt-8 grid gap-8 md:grid-cols-3">
