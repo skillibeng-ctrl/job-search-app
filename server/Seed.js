@@ -2,7 +2,7 @@
 // DEV ONLY: it marks the sample companies "verified" so they show up. In real life, only YOU verify a company.
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { db } from "./Db.js";
+import { db } from "./db.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const jobsFile = process.argv[2] || path.resolve(here, "../src/data/jobs.js");
