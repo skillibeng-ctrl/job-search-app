@@ -1,27 +1,42 @@
 import express from "express";
+import "dotenv/config";
 import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
+import multer from "multer";
+import { createRequire } from "module";
+const require = createRequire(import.meta.url);
+const pdfParse = require("pdf-parse");
+
+// 🔥 Handle both CommonJS export styles
+const pdf = pdfParse && pdfParse.default ? pdfParse.default : pdfParse;
+import OpenAI from "openai";
+import "dotenv/config"; 
 import { db } from "./db.js";
 import templatesRouter from "./templates.js";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-app.use("/templates", express.static(path.join(__dirname, "template-files")));
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
+// Initialize OpenAI
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 5 * 1024 * 1024 } 
+});
+
 app.use(helmet());
-app.use(cors({ origin: process.env.CLIENT_ORIGIN || "http://localhost:5173", credentials: true }));
-app.use(express.json({ limit: "100kb" }));
+// 🔥 Fix CORS to allow both 5173 and 5174 (since Vite auto-increments ports)
+app.use(cors({ 
+  origin: ["http://localhost:5173", "http://localhost:5174"], 
+  credentials: true 
+}));
+// 🔥 Increased limit to 5mb to allow pasted resume text
+app.use(express.json({ limit: "5mb" })); 
+
 app.use("/api", rateLimit({ windowMs: 15 * 60 * 1000, limit: 300, standardHeaders: true, legacyHeaders: false }));
 
-/* THE rule that makes "verified, no spam" true. Every public query uses it, so the jobs list,
-   the map and the stats can never disagree with each other. */
 const VISIBLE = "c.verified = 1 AND j.status = 'published' AND (j.expires_at IS NULL OR j.expires_at > ?)";
 const now = () => new Date().toISOString();
 
@@ -41,39 +56,15 @@ const toApi = (r, withDescription = false) => ({
   ...(withDescription ? { description: r.description } : {}),
 });
 
-// GET user's saved resume
-app.get("/api/resume-builder", (req, res) => {
-  // In a real app, you get the userId from a session/token
-  const userId = req.query.userId || "test-user"; 
-  
-  // We'll assume you have a 'resumes' table. 
-  // If you don't, run: CREATE TABLE resumes (user_id TEXT, data TEXT)
-  const row = db.prepare("SELECT data FROM resumes WHERE user_id = ?").get(userId);
-  
-  if (!row) return res.json({ resume: null });
-  res.json({ resume: JSON.parse(row.data) });
-});
-
-// POST (Save) user's resume
-app.post("/api/resume-builder", (req, res) => {
-  const userId = req.body.userId || "test-user";
-  const resumeData = req.body.resume;
-
-  // Upsert (Insert or Update)
-  db.prepare(`
-    INSERT INTO resumes (user_id, data) VALUES (?, ?)
-    ON CONFLICT(user_id) DO UPDATE SET data = excluded.data
-  `).run(userId, JSON.stringify(resumeData));
-
-  res.json({ success: true });
-});
-
-const like = (s) => `%${String(s).replace(/[\\%_]/g, "\\$&")}%`; // user text can't act as a wildcard
+const like = (s) => `%${String(s).replace(/[\\%_]/g, "\\$&")}%`;
 const int = (v, fallback) => (Number.isFinite(parseInt(v, 10)) ? parseInt(v, 10) : fallback);
+
+/* ========================================================= */
+/* EXISTING ROUTES                                           */
+/* ========================================================= */
 
 app.get("/api/health", (_req, res) => res.json({ ok: true }));
 
-/* GET /api/jobs?q=&loc=&remote=&seniority=&postedWithin=&minSalary=&sort=recent|salary&page=&pageSize= */
 app.get("/api/jobs", (req, res) => {
   const { q, loc, remote, seniority, postedWithin, minSalary, sort } = req.query;
   const where = [VISIBLE];
@@ -100,7 +91,6 @@ app.get("/api/jobs", (req, res) => {
   res.json({ jobs: rows.map((r) => toApi(r)), total });
 });
 
-/* Map data: real counts per city, plus remote roles (which have no pin). Same rule as the list. */
 app.get("/api/jobs/locations", (_req, res) => {
   const t = now();
   const locations = db
@@ -117,7 +107,6 @@ app.get("/api/jobs/locations", (_req, res) => {
   res.json({ locations, remoteCount });
 });
 
-/* Real numbers for the trust section. Show them only when they are worth showing. */
 app.get("/api/stats", (_req, res) => {
   const t = now();
   const openRoles = db.prepare(`SELECT COUNT(*) AS n FROM jobs j JOIN companies c ON c.id = j.company_id WHERE ${VISIBLE}`).get(t).n;
@@ -134,7 +123,151 @@ app.get("/api/jobs/:id", (req, res) => {
   res.json({ job: toApi(row, true) });
 });
 
+// Resume Builder (Save/Load from DB)
+db.exec(`
+CREATE TABLE IF NOT EXISTS resumes (
+  user_id    TEXT PRIMARY KEY,
+  data       TEXT NOT NULL,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+`);
+
+app.get("/api/resume-builder", (req, res) => {
+  const userId = String(req.query.userId || "test-user");
+  const row = db.prepare("SELECT data FROM resumes WHERE user_id = ?").get(userId);
+  if (!row) return res.json({ resume: null });
+  try { res.json({ resume: JSON.parse(row.data) }); } catch { res.json({ resume: null }); }
+});
+
+app.post("/api/resume-builder", (req, res) => {
+  const userId = String(req.body?.userId || "test-user");
+  const resumeData = req.body?.resume;
+  if (!resumeData || typeof resumeData !== "object") return res.status(400).json({ message: "Missing resume data." });
+
+  db.prepare(
+    `INSERT INTO resumes (user_id, data) VALUES (?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET data = excluded.data, updated_at = CURRENT_TIMESTAMP`
+  ).run(userId, JSON.stringify(resumeData));
+
+  res.json({ success: true });
+});
+
 app.use(templatesRouter);
+
+/* ========================================================= */
+/* 🔥 NEW AI & RESUME MATCH ROUTES                           */
+/* ========================================================= */
+
+const resumes = new Map(); // Temporary memory storage
+
+// 1. The frontend calls this on load to see if a resume exists
+app.get("/api/resume", (req, res) => {
+  res.json({ resume: null }); // Always return null for now so the upload box shows
+});
+
+// 2. The frontend calls this to get the list of jobs to compare against
+app.get("/api/me/jobs", (req, res) => {
+  try {
+    // Fetch 3 real jobs from your database
+    const jobs = db.prepare("SELECT id, title FROM jobs LIMIT 3").all();
+    const formatted = jobs.map(j => ({
+      id: String(j.id),
+      title: j.title,
+      company: "JobFlow Partner",
+      status: "applied"
+    }));
+    res.json({ jobs: formatted });
+  } catch {
+    res.json({ jobs: [] });
+  }
+});
+
+// 3. Upload & Parse Resume
+app.post("/api/resume", upload.single("file"), async (req, res) => {
+  try {
+    let resumeText = "";
+    
+    if (req.file) {
+      if (req.file.mimetype === "application/pdf") {
+        const data = await pdf(req.file.buffer);
+        resumeText = data.text;
+      } else {
+        resumeText = req.file.buffer.toString("utf-8");
+      }
+    } else if (req.body.text) {
+      resumeText = req.body.text;
+    } else {
+      return res.status(400).json({ message: "No file or text provided." });
+    }
+
+    const resumeId = "res_" + Date.now();
+    resumes.set(resumeId, resumeText); 
+
+    res.json({ 
+      resume: { 
+        id: resumeId, 
+        filename: req.file ? req.file.originalname : "Pasted Resume", 
+        uploadedAt: new Date().toISOString() 
+      } 
+    });
+  } catch (err) {
+    console.error("Upload error:", err);
+    res.status(500).json({ message: "Failed to read the resume." });
+  }
+});
+
+// 4. AI Matching Engine
+app.post("/api/match", async (req, res) => {
+  const { resumeId, jobIds } = req.body;
+
+  const resumeText = resumes.get(resumeId);
+  if (!resumeText) {
+    return res.status(400).json({ message: "Resume not found. Please upload again." });
+  }
+
+  try {
+    const results = await Promise.all(jobIds.map(async (id) => {
+      const row = db
+        .prepare(`SELECT j.*, c.name AS company_name FROM jobs j JOIN companies c ON c.id = j.company_id WHERE j.id = ?`)
+        .get(int(id, -1));
+      
+      if (!row) throw new Error(`Job ${id} not found`);
+
+      const prompt = `
+        You are an expert tech recruiter. Compare the following resume to the job description.
+        
+        RESUME: ${resumeText.substring(0, 3000)}
+        
+        JOB TITLE: ${row.title}
+        JOB DESCRIPTION: ${row.description || "No description provided."}
+        
+        You must return a valid JSON object with EXACTLY this structure:
+        {
+          "score": (number 0-100),
+          "matched": [{"skill": "Skill Name", "evidence": "Quote from resume"}],
+          "missing": [{"skill": "Skill Name", "importance": "required" or "preferred"}],
+          "experience": {"required": (number), "found": (number), "ok": (boolean)},
+          "suggestions": ["Tip to improve resume for this role"]
+        }
+      `;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        response_format: { type: "json_object" },
+        messages: [{ role: "user", content: prompt }]
+      });
+
+      return { jobId: id, ...JSON.parse(response.choices[0].message.content) };
+    }));
+
+    res.json({ results });
+  } catch (err) {
+    console.error("AI Match error:", err);
+    res.status(500).json({ message: "AI analysis failed. Please try again." });
+  }
+});
+
+/* ========================================================= */
 
 app.use("/api", (_req, res) => res.status(404).json({ message: "Not found." }));
 app.use((err, _req, res, _next) => {
