@@ -4,7 +4,7 @@ import express from "express";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { db } from "./db.js";
+import { db } from "./db.js"; // ✅ Correct
 
 const FILES_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), "template-files");
 
