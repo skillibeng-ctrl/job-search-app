@@ -5,16 +5,14 @@ import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import multer from "multer";
 import { createRequire } from "module";
-const require = createRequire(import.meta.url);
-const pdfParse = require("pdf-parse");
 
-// 🔥 Handle both CommonJS export styles
-const pdf = pdfParse && pdfParse.default ? pdfParse.default : pdfParse;
+// 🔥 THE FIX: Load pdf-parse as a CommonJS module
+const require = createRequire(import.meta.url);
+const pdf = require("pdf-parse");
+
 import OpenAI from "openai";
-import "dotenv/config"; 
 import { db } from "./db.js";
 import templatesRouter from "./templates.js";
-
 const app = express();
 const PORT = process.env.PORT || 4000;
 
@@ -185,6 +183,8 @@ app.get("/api/me/jobs", (req, res) => {
 // 3. Upload & Parse Resume
 app.post("/api/resume", upload.single("file"), async (req, res) => {
   try {
+    console.log("File received:", req.file ? req.file.originalname : "No file"); // 🔥 DEBUG LOG
+
     let resumeText = "";
     
     if (req.file) {
@@ -211,11 +211,10 @@ app.post("/api/resume", upload.single("file"), async (req, res) => {
       } 
     });
   } catch (err) {
-    console.error("Upload error:", err);
+    console.error("Upload error:", err); // 🔥 Check terminal for this!
     res.status(500).json({ message: "Failed to read the resume." });
   }
 });
-
 // 4. AI Matching Engine
 app.post("/api/match", async (req, res) => {
   const { resumeId, jobIds } = req.body;
@@ -257,13 +256,16 @@ app.post("/api/match", async (req, res) => {
         messages: [{ role: "user", content: prompt }]
       });
 
+// ... the rest of your AI matching code ...
       return { jobId: id, ...JSON.parse(response.choices[0].message.content) };
     }));
 
     res.json({ results });
+  
+  // 🔥 REPLACE THE CATCH BLOCK HERE
   } catch (err) {
-    console.error("AI Match error:", err);
-    res.status(500).json({ message: "AI analysis failed. Please try again." });
+    console.error("🔥 AI MATCH ERROR:", err); 
+    res.status(500).json({ message: "AI analysis failed.", error: err.message || err.toString() }); 
   }
 });
 
