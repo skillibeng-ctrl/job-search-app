@@ -8,34 +8,32 @@ export default function Footer() {
 
   return (
     <footer className="relative bg-[#0a0f1c] text-white pt-20 pb-10 overflow-hidden">
-      {/* Subtle Top Glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-px bg-gradient-to-r from-transparent via-emerald-500/50 to-transparent"></div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 lg:gap-8 mb-16">
           
-          {/* Brand Column (Spans 2 columns on large screens) */}
+          {/* Brand Column */}
           <div className="lg:col-span-2">
             <Link to="/" className="flex items-center gap-2 mb-6">
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-sm font-bold text-white shadow-sm">
-                J
-              </span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-sm font-bold text-white shadow-sm">J</span>
               <span className="text-xl font-bold tracking-tight">JobFlow</span>
             </Link>
             <p className="text-gray-400 mb-6 max-w-sm leading-relaxed">
               Connecting the world's most innovative companies with top talent. Find your next role, track your applications, and get hired faster.
             </p>
             
-            {/* Social Icons */}
             <div className="flex gap-4">
               {[
-                { icon: Twitter, href: "#", label: "Twitter" },
-                { icon: Linkedin, href: "#", label: "LinkedIn" },
-                { icon: Github, href: "#", label: "GitHub" },
+                { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
+                { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
+                { icon: Github, href: "https://github.com", label: "GitHub" },
               ].map((social) => (
                 <a
                   key={social.label}
                   href={social.href}
+                  target="_blank"
+                  rel="noreferrer"
                   aria-label={social.label}
                   className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 text-gray-400 transition-all hover:bg-emerald-500 hover:border-emerald-500 hover:text-white hover:-translate-y-1"
                 >
@@ -45,30 +43,30 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* For Job Seekers */}
+          {/* Job Seekers */}
           <div>
             <h4 className="font-semibold text-sm tracking-wider uppercase text-gray-300 mb-6">For Job Seekers</h4>
             <ul className="space-y-4">
               <li><Link to="/jobs" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">Browse Jobs</Link></li>
               <li><Link to="/companies" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">Browse Companies</Link></li>
               <li><Link to="/resources" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">Career Resources</Link></li>
-              <li><Link to="/how-it-works" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">How It Works</Link></li>
+              <li><Link to="/resume-templates" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">Resume Templates</Link></li>
               <li><Link to="/salaries" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">Salary Guide</Link></li>
             </ul>
           </div>
 
-          {/* For Employers */}
+          {/* Employers */}
           <div>
             <h4 className="font-semibold text-sm tracking-wider uppercase text-gray-300 mb-6">For Employers</h4>
             <ul className="space-y-4">
               <li><Link to="/employers" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">Post a Job</Link></li>
+              <li><Link to="/employers#pricing" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">Pricing</Link></li>
               <li><a href="#" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">Employer Branding</a></li>
               <li><a href="#" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">Recruiting Solutions</a></li>
-              <li><a href="#" className="text-gray-400 hover:text-emerald-400 transition-colors text-sm">Pricing</a></li>
             </ul>
           </div>
 
-          {/* Newsletter / Company */}
+          {/* Newsletter */}
           <div>
             <h4 className="font-semibold text-sm tracking-wider uppercase text-gray-300 mb-6">Stay Updated</h4>
             <p className="text-sm text-gray-400 mb-4">Get the latest job alerts directly to your inbox.</p>
@@ -96,9 +94,9 @@ export default function Footer() {
           </p>
           
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm text-gray-500">
-            <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
-            <a href="#" className="hover:text-white transition-colors">Cookie Policy</a>
+            <Link to="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+            <Link to="/terms" className="hover:text-white transition-colors">Terms of Service</Link>
+            <Link to="/cookies" className="hover:text-white transition-colors">Cookie Policy</Link>
           </div>
 
           <button
