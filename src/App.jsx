@@ -9,16 +9,23 @@ import Resources from "./component/Resources";
 import Footer from "./components/ui/Footer";
 
 // Page Imports
-import Jobs from "./pages/Job";
+import Jobs from "./pages/Job"; 
 import JobDetail from "./pages/JobDetail";
 import SavedJobs from "./pages/SavedJobs";
-import Applications from "./pages/Applications";
-import SignIn from "./pages/SignIn";
+import Applications from "./pages/Applications"; 
+import SignIn from "./pages/SignIn"; 
 import Register from "./pages/Register";
-import Salaries from "./pages/Salaries";
+import Salaries from "./pages/Salaries" 
 import ResumeTemplates from "./pages/ResumeTemplates";
-import ResumeMatch from "./pages/ResumeMatch";
 import ResumeBuilder from "./pages/ResumeBuilder";
+import ResumeMatch from "./pages/ResumeMatch"; // Assuming you have this
+import Employers from "./pages/Employers";
+import Legal from "./pages/Legal";
+import PostJob from "./pages/PostJob";
+import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import Help from "./pages/Help";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -26,7 +33,7 @@ function App() {
   useEffect(() => {
     const storedUser = localStorage.getItem("jobflow_user");
     if (storedUser) {
-      try { setUser(JSON.parse(storedUser)); } catch { localStorage.removeItem("jobflow_user"); }
+      setUser(JSON.parse(storedUser));
     }
   }, []);
 
@@ -37,44 +44,63 @@ function App() {
 
   return (
     <Router>
-      <div className="App flex min-h-screen flex-col">
+      <div className="App flex flex-col min-h-screen">
         <NavBar user={user} onLogout={handleLogout} />
-
-        {/* Pages that have their own <main id="main"> (Jobs, Resources, Salaries, ...) must not be wrapped in another <main>, so this is a div. */}
-        <div className="flex-grow">
+        
+        <main className="flex-grow">
+          {/* 🔥 ALL ROUTES MUST GO INSIDE THIS ROUTES TAG */}
           <Routes>
             {/* Home */}
             <Route
               path="/"
               element={
-                <main id="main">
+                <>
                   <Hero />
                   <Career />
-                  <Dream />
-                </main>
+                  <Dream /> 
+                </>
               }
             />
-
+            
             {/* Auth */}
             <Route path="/signin" element={<SignIn setUser={setUser} />} />
             <Route path="/register" element={<Register setUser={setUser} />} />
 
             {/* App Pages */}
-            <Route path="/jobs" element={<Jobs />} />
-            <Route path="/jobs/:id" element={<JobDetail />} />
-            <Route path="/saved" element={<SavedJobs />} />
+            <Route path="/jobs" element={<Jobs />} /> 
+            <Route path="/jobs/:id" element={<JobDetail />}/>
+            <Route path="/saved" element={<SavedJobs />}/>
             <Route path="/applications" element={<Applications />} />
-            <Route path="/match" element={<ResumeMatch />} />
-
+            
             {/* Resources */}
             <Route path="/salaries" element={<Salaries />} />
             <Route path="/resume-templates" element={<ResumeTemplates />} />
+            <Route path="/resume-builder" element={<ResumeBuilder />} />
+            <Route path="/match" element={<ResumeMatch />} />
             <Route path="/companies" element={<Companies />} />
             <Route path="/resources" element={<Resources />} />
-            <Route path="/resume-builder" element={<ResumeBuilder />} />
-          </Routes>
-        </div>
 
+            {/* User Profile */}
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/help" element={<Help />} />
+
+            {/* Employer Routes */}
+            <Route path="/employers" element={<Employers />} />
+            
+            {/* 🔥 THE PROTECTED ROUTE (Notice it is inside Routes) */}
+            <Route element={<ProtectedRoute allowedRole="employer" />}>
+              <Route path="/employers/post" element={<PostJob />} />
+            </Route>
+
+            {/* Legal */}
+            <Route path="/privacy" element={<Legal />} />
+            <Route path="/terms" element={<Legal />} />
+            <Route path="/cookies" element={<Legal />} />
+          </Routes>
+          {/* 🔥 END OF ROUTES */}
+        </main>
+        
         <Footer />
       </div>
     </Router>
