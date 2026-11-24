@@ -7,8 +7,9 @@ import Companies from "./component/Companies";
 import Dream from "./component/Dream";
 import Resources from "./component/Resources";
 import Footer from "./components/ui/Footer";
+import Preferences from "./component/Preferences";
 
-// Page Imports
+
 import Jobs from "./pages/Job"; 
 import JobDetail from "./pages/JobDetail";
 import SavedJobs from "./pages/SavedJobs";
@@ -18,14 +19,14 @@ import Register from "./pages/Register";
 import Salaries from "./pages/Salaries" 
 import ResumeTemplates from "./pages/ResumeTemplates";
 import ResumeBuilder from "./pages/ResumeBuilder";
-import ResumeMatch from "./pages/ResumeMatch"; // Assuming you have this
+import ResumeMatch from "./pages/ResumeMatch"; 
 import Employers from "./pages/Employers";
 import Legal from "./pages/Legal";
 import PostJob from "./pages/PostJob";
 import Profile from "./pages/Profile";
-import Settings from "./pages/Settings";
+// import Settings from "./pages/Settings";
 import Help from "./pages/Help";
-import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./component/ProtectedRoute";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -71,6 +72,7 @@ function App() {
             <Route path="/jobs/:id" element={<JobDetail />}/>
             <Route path="/saved" element={<SavedJobs />}/>
             <Route path="/applications" element={<Applications />} />
+            <Route path="/prefrences" element={<Preferences />} />
             
             {/* Resources */}
             <Route path="/salaries" element={<Salaries />} />
