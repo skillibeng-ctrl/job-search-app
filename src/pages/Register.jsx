@@ -131,7 +131,11 @@ export default function Register() {
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const home = (u) => (u.role === "employer" ? "/employer" : next ?? "/jobs");
+  const home = (u) => {
+    if (u.role === "employer") return "/employers"; 
+    if (next) return next; 
+    return "/preferences";  
+  };
 
   if (!authLoading && user) return <Navigate to={home(user)} replace />;
 
