@@ -8,6 +8,7 @@ import Dream from "./component/Dream";
 import Resources from "./component/Resources";
 import Footer from "./components/ui/Footer";
 import Preferences from "./component/Preferences";
+import { Toaster } from "sonner";
 
 
 import Jobs from "./pages/Job"; 
@@ -24,7 +25,7 @@ import Employers from "./pages/Employers";
 import Legal from "./pages/Legal";
 import PostJob from "./pages/PostJob";
 import Profile from "./pages/Profile";
-// import Settings from "./pages/Settings";
+import Settings from "./settings/Settings";
 import Help from "./pages/Help";
 import ProtectedRoute from "./component/ProtectedRoute";
 
@@ -47,6 +48,7 @@ function App() {
     <Router>
       <div className="App flex flex-col min-h-screen">
         <NavBar user={user} onLogout={handleLogout} />
+        <Toaster position="top-right" richColors />
         
         <main className="flex-grow">
           {/* 🔥 ALL ROUTES MUST GO INSIDE THIS ROUTES TAG */}
