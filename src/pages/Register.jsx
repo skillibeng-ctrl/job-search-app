@@ -1,53 +1,14 @@
-import { useState, createContext, useContext, useEffect } from "react";
-import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { 
   User, Mail, Lock, Building2, Eye, EyeOff, 
-  Briefcase, Search, ArrowRight, Loader2 
+  Briefcase, Search, ArrowRight, Loader2, ShieldCheck 
 } from "lucide-react";
 import { toast } from "sonner";
 
-/* ========================================================= */
-/* 🔥 1. FAKE AUTH CONTEXT (Replace this with Supabase later)  */
-/* ========================================================= */
-const AuthContext = createContext(null);
-export const useAuth = () => useContext(AuthContext);
-
-export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("jobflow_user");
-    if (stored) setUser(JSON.parse(stored));
-    setLoading(false);
-  }, []);
-
-  const register = async (payload) => {
-    await new Promise((resolve) => setTimeout(resolve, 800)); // Fake API delay
-    // Check if user already exists
-    if (payload.email === "test@test.com") {
-      const error = new Error("Email in use");
-      error.status = 409;
-      throw error;
-    }
-    localStorage.setItem("jobflow_user", JSON.stringify(payload));
-    setUser(payload);
-    return payload;
-  };
-
-  return (
-    <AuthContext.Provider value={{ user, loading, register }}>
-      {children}
-    </AuthContext.Provider>
-  );
-}
-
-/* ========================================================= */
-/* 🔥 2. AUTH UI HELPERS                                      */
-/* ========================================================= */
-export const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-export const FOCUS = "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500";
-export const safeNext = (next) => (next && next.startsWith("/") ? next : null);
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const FOCUS = "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500";
+const safeNext = (next) => (next && next.startsWith("/") ? next : null);
 
 function AuthShell({ title, subtitle, children, footer }) {
   return (
@@ -107,17 +68,12 @@ function PasswordField({ id, label, error, ...props }) {
   );
 }
 
-/* ========================================================= */
-/* 🔥 3. THE MAIN REGISTER PAGE                               */
-/* ========================================================= */
-
 const ROLES = [
   { id: "seeker", label: "I'm looking for a job", icon: Search },
   { id: "employer", label: "I'm hiring", icon: Briefcase },
 ];
 
-export default function Register() {
-  const { user, loading: authLoading, register } = useAuth();
+export default function Register({ setUser }) {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const next = safeNext(params.get("next"));
@@ -127,17 +83,22 @@ export default function Register() {
   const [companyName, setCompanyName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  
+  // CAPTCHA State
+  const [num1] = useState(Math.floor(Math.random() * 10) + 1);
+  const [num2] = useState(Math.floor(Math.random() * 10) + 1);
+  const [captchaInput, setCaptchaInput] = useState("");
+
   const [errors, setErrors] = useState({});
   const [formError, setFormError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // After signup, send to preferences for seekers, or employers dashboard
   const home = (u) => {
     if (u.role === "employer") return "/employers"; 
     if (next) return next; 
-    return "/preferences";  
+    return "/preferences"; // 👈 Force them to complete their profile
   };
-
-  if (!authLoading && user) return <Navigate to={home(user)} replace />;
 
   const submit = async (e) => {
     e.preventDefault();
@@ -146,6 +107,11 @@ export default function Register() {
     if (role === "employer" && !companyName.trim()) found.companyName = "Enter your company name.";
     if (!EMAIL_RE.test(email.trim())) found.email = "Enter a valid email address.";
     if (password.length < 8) found.password = "Use at least 8 characters.";
+    
+    // CAPTCHA Validation
+    if (parseInt(captchaInput) !== num1 + num2) {
+      found.captcha = "Incorrect answer. Please try again.";
+    }
     
     setErrors(found);
     setFormError("");
@@ -156,18 +122,19 @@ export default function Register() {
       const payload = { 
         name: name.trim(), 
         email: email.trim(), 
-        password, 
         role, 
+        initials: name.trim().substring(0, 2).toUpperCase(),
         ...(role === "employer" ? { companyName: companyName.trim() } : {}) 
       };
-      const u = await register(payload);
-      toast.success("Account created successfully!");
-      navigate(home(u), { replace: true });
+      
+      localStorage.setItem("jobflow_user", JSON.stringify(payload));
+      if (setUser) setUser(payload);
+      
+      toast.success("Account created! Let's set up your preferences.");
+      navigate(home(payload), { replace: true });
+      
     } catch (err) {
-      if (err.fieldErrors) setErrors(err.fieldErrors);
-      if (err.status === 409) setFormError("An account with this email already exists.");
-      else if (err.status === 429) setFormError("Too many attempts. Please wait a few minutes and try again.");
-      else if (!err.fieldErrors) setFormError("We couldn't create your account. Please try again.");
+      setFormError("We couldn't create your account. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -181,14 +148,12 @@ export default function Register() {
     >
       <form onSubmit={submit} noValidate className="space-y-5">
         
-        {/* Global Form Error */}
         {formError && (
           <div className="rounded-xl bg-rose-50 p-3 text-sm font-medium text-rose-700 border border-rose-200">
             {formError}
           </div>
         )}
 
-        {/* Role Toggle */}
         <div className="grid grid-cols-2 gap-3">
           {ROLES.map((r) => {
             const Icon = r.icon;
@@ -210,7 +175,6 @@ export default function Register() {
           })}
         </div>
 
-        {/* Social Auth */}
         <button type="button" className="flex w-full items-center justify-center gap-3 rounded-xl border border-gray-300 bg-white py-3 text-sm font-semibold text-gray-700 transition hover:bg-gray-50">
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -226,7 +190,6 @@ export default function Register() {
           <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-500">Or continue with email</span></div>
         </div>
 
-        {/* Inputs */}
         <Field id="reg-name" label="Full name" icon={User} autoComplete="name" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} />
         
         {role === "employer" && (
@@ -236,6 +199,24 @@ export default function Register() {
         <Field id="reg-email" label={role === "employer" ? "Work email" : "Email address"} icon={Mail} type="email" autoComplete="email" placeholder="you@example.com" value={email} onChange={(e) => setEmail(e.target.value)} error={errors.email} />
         
         <PasswordField id="reg-password" label="Password" autoComplete="new-password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} error={errors.password} />
+
+        {/* 🔥 CAPTCHA SECTION */}
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+            <ShieldCheck className="h-4 w-4 text-emerald-600" /> 
+            Security Check: What is {num1} + {num2}?
+          </label>
+          <input 
+            type="number" 
+            required
+            value={captchaInput} 
+            onChange={(e) => setCaptchaInput(e.target.value)}
+            placeholder="Enter the answer" 
+            className={`w-full rounded-xl border border-gray-300 px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 outline-none ${errors.captcha ? "border-rose-300" : ""}`} 
+          />
+          {errors.captcha && <p className="mt-1.5 text-xs font-medium text-rose-600">{errors.captcha}</p>}
+        </div>
+
         <button 
           type="submit" 
           disabled={loading} 
