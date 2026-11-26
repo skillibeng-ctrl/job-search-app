@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { Briefcase, MapPin, DollarSign, Clock, CheckCircle2 } from "lucide-react";
+import { User, Phone, Linkedin, Briefcase, MapPin, DollarSign, Clock, CheckCircle2 } from "lucide-react";
 
 const JOB_CATEGORIES = ["Engineering", "Design", "Data", "Product", "Marketing", "Customer Success", "Sales", "Finance"];
 
@@ -10,15 +10,17 @@ export default function Preferences() {
   const [loading, setLoading] = useState(false);
   
   const [prefs, setPrefs] = useState({
+    phone: "",
+    linkedin: "",
+    skills: "",
     roles: "",
     location: "",
-    workStyle: "remote", // remote, hybrid, onsite
+    workStyle: "remote", 
     expectedSalary: "",
     jobTypes: ["full-time"],
     categories: []
   });
 
-  // Load existing preferences if they exist
   useEffect(() => {
     const saved = localStorage.getItem("jobflow_preferences");
     if (saved) {
@@ -45,13 +47,12 @@ export default function Preferences() {
     e.preventDefault();
     setLoading(true);
     
-    // Save to localStorage
     localStorage.setItem("jobflow_preferences", JSON.stringify(prefs));
     
     setTimeout(() => {
       setLoading(false);
-      toast.success("Preferences saved! We'll find the best jobs for you.");
-      navigate("/jobs"); // Send them to the jobs page to see their personalized matches
+      toast.success("Profile setup complete! Welcome to JobFlow.");
+      navigate("/"); // 🔥 Takes them to the Home Page!
     }, 600);
   };
 
@@ -60,13 +61,60 @@ export default function Preferences() {
       <div className="max-w-2xl mx-auto">
         
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-bold text-gray-900 mb-3">What are you looking for?</h1>
-          <p className="text-gray-600">Tell us your preferences so we can match you with the perfect roles.</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">Let's build your profile</h1>
+          <p className="text-gray-600">Tell us about yourself so we can match you with the perfect roles.</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 space-y-8">
           
-          {/* 1. Roles */}
+          {/* Contact Info */}
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3">
+                <Phone className="h-4 w-4 text-emerald-600" /> Phone Number
+              </label>
+              <input 
+                type="tel"
+                name="phone" 
+                value={prefs.phone} 
+                onChange={handleChange} 
+                placeholder="+234 800 000 0000" 
+                className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 outline-none" 
+              />
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3">
+                <Linkedin className="h-4 w-4 text-emerald-600" /> LinkedIn URL
+              </label>
+              <input 
+                type="url"
+                name="linkedin" 
+                value={prefs.linkedin} 
+                onChange={handleChange} 
+                placeholder="linkedin.com/in/yourname" 
+                className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 outline-none" 
+              />
+            </div>
+          </div>
+
+          {/* Skills */}
+          <div>
+            <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3">
+              <User className="h-4 w-4 text-emerald-600" /> Top Skills
+            </label>
+            <input 
+              name="skills" 
+              value={prefs.skills} 
+              onChange={handleChange} 
+              placeholder="e.g. React, Node.js, Project Management" 
+              className="w-full border border-gray-300 rounded-xl p-3 focus:ring-2 focus:ring-emerald-500 outline-none" 
+            />
+            <p className="text-xs text-gray-500 mt-2">Separate skills with commas.</p>
+          </div>
+
+          <hr className="border-gray-100" />
+
+          {/* Roles */}
           <div>
             <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3">
               <Briefcase className="h-4 w-4 text-emerald-600" /> What job titles are you looking for?
@@ -81,7 +129,6 @@ export default function Preferences() {
             />
           </div>
 
-          {/* 2. Location & 3. Work Style */}
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3">
@@ -111,10 +158,9 @@ export default function Preferences() {
             </div>
           </div>
 
-          {/* 4. Salary */}
           <div>
             <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3">
-              <DollarSign className="h-4 w-4 text-emerald-600" /> Expected Monthly Salary (Minimum)
+              <DollarSign className="h-4 w-4 text-emerald-600" /> Expected Monthly Salary
             </label>
             <input 
               type="number" 
@@ -126,30 +172,6 @@ export default function Preferences() {
             />
           </div>
 
-          {/* 5. Job Types */}
-          <div>
-            <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3">
-              <Clock className="h-4 w-4 text-emerald-600" /> Job Type
-            </label>
-            <div className="flex flex-wrap gap-3">
-              {["full-time", "part-time", "contract", "internship"].map(type => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => toggleArrayItem("jobTypes", type)}
-                  className={`px-4 py-2 rounded-xl border text-sm font-medium capitalize transition ${
-                    prefs.jobTypes.includes(type) 
-                      ? "bg-emerald-50 border-emerald-500 text-emerald-700" 
-                      : "bg-white border-gray-300 text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* 6. Categories */}
           <div>
             <label className="flex items-center gap-2 text-sm font-bold text-gray-900 mb-3">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" /> Job Categories
@@ -178,7 +200,7 @@ export default function Preferences() {
               disabled={loading} 
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-4 rounded-xl font-bold text-lg transition disabled:opacity-70"
             >
-              {loading ? "Saving..." : "Save Preferences"}
+              {loading ? "Saving..." : "Complete Profile"}
             </button>
           </div>
         </form>
